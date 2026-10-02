@@ -200,6 +200,83 @@ body {
   gap: 6px;
 }
 
+.control-bank--voice {
+  align-items: stretch;
+}
+
+.voice-console {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto auto auto;
+  gap: 4px;
+  align-items: center;
+}
+
+#voice-text {
+  min-width: 0;
+  width: 100%;
+  min-height: 30px;
+  max-height: 90px;
+  resize: vertical;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 6px 7px;
+  background: #fff7cf;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.35vw, 11px) / 1.2 "Courier New", Courier, monospace;
+}
+
+#voice-text:focus {
+  outline: none;
+  background: #ffffff;
+  box-shadow: 3px 3px 0 #120c00;
+}
+
+#voice-speak,
+#voice-stop {
+  appearance: none;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 6px 8px;
+  background: #86ff5b;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.35vw, 11px) / 1 "Courier New", Courier, monospace;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#voice-stop {
+  background: #ff69cf;
+}
+
+#voice-speak:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+#voice-status {
+  min-width: 92px;
+  padding: 5px 6px;
+  border: 2px solid #120c00;
+  background: #120c00;
+  color: #ffc800;
+  font: 700 8px/1 "Courier New", Courier, monospace;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#voice-status[data-state="speaking"] {
+  background: #00e5ff;
+  color: #120c00;
+}
+
+#voice-status[data-state="error"] {
+  background: #ff2fb7;
+  color: #120c00;
+}
+
+
 #auto-chaos[aria-pressed="true"] {
   background: #86ff5b;
 }
@@ -242,6 +319,15 @@ html[style*="--breach: 1"] .hud__label {
     max-width: calc(100vw - 74px);
   }
 
+  .voice-console {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  #voice-status {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
   .system-controls {
     justify-content: space-between;
   }
@@ -264,6 +350,12 @@ html[style*="--breach: 1"] .hud__label {
   #motion-toggle,
   #auto-chaos {
     padding: 5px 6px;
+    font-size: 8px;
+  }
+
+  #voice-text,
+  #voice-speak,
+  #voice-stop {
     font-size: 8px;
   }
 

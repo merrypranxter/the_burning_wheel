@@ -1,6 +1,6 @@
 {
   "name": "the-burning-wheel",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "private": true,
   "description": "Modular persona cartridge and animated character engine for The Burning Wheel.",

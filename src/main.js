@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { BurningWheel } from "./character/BurningWheel.js";
 import { ContainmentEngine } from "./character/ContainmentEngine.js";
+import { VoiceController } from "./voice/VoiceController.js";
 import "./style.css";
 
 const stage = document.querySelector("#stage");
@@ -8,6 +9,10 @@ const motionToggle = document.querySelector("#motion-toggle");
 const autoChaosToggle = document.querySelector("#auto-chaos");
 const realityReset = document.querySelector("#reality-reset");
 const statusLine = document.querySelector(".hud__label span");
+const voiceText = document.querySelector("#voice-text");
+const voiceSpeak = document.querySelector("#voice-speak");
+const voiceStop = document.querySelector("#voice-stop");
+const voiceStatus = document.querySelector("#voice-status");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#168cff");
@@ -96,6 +101,52 @@ const containment = new ContainmentEngine({
   resetButton: realityReset,
 });
 
+const voice = new VoiceController({
+  angel,
+  containment,
+  onState(state) {
+    if (!voiceStatus) return;
+
+    const labels = {
+      idle: "THROAT IDLE",
+      summoning: "SUMMONING VOICE...",
+      speaking: "VOICE ONLINE",
+      paused: "VOICE PAUSED",
+      error: "THROAT ERROR",
+    };
+
+    voiceStatus.textContent = labels[state] || state.toUpperCase();
+    voiceStatus.dataset.state = state;
+  },
+});
+
+async function speakCurrentLine() {
+  const line = voiceText?.value || "";
+
+  try {
+    voiceSpeak?.setAttribute("disabled", "");
+    await voice.speak(line);
+  } catch (error) {
+    console.error(error);
+    if (voiceStatus) {
+      voiceStatus.textContent = error?.message || "VOICE FAILURE";
+      voiceStatus.dataset.state = "error";
+    }
+  } finally {
+    voiceSpeak?.removeAttribute("disabled");
+  }
+}
+
+voiceSpeak?.addEventListener("click", speakCurrentLine);
+voiceStop?.addEventListener("click", () => voice.stop());
+
+voiceText?.addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+    event.preventDefault();
+    speakCurrentLine();
+  }
+});
+
 const EXPRESSION_KEYS = {
   Digit1: "neutral",
   Digit2: "smug",
@@ -181,12 +232,20 @@ autoChaosToggle?.addEventListener("click", () => {
 });
 
 realityReset?.addEventListener("click", () => {
+  voice.stop();
   containment.reset();
 });
 
 window.addEventListener("keydown", (event) => {
   if (event.code === "Escape") {
     containment.reset();
+    return;
+  }
+
+  if (
+    event.target instanceof HTMLElement &&
+    event.target.matches("input, textarea, [contenteditable='true']")
+  ) {
     return;
   }
 
@@ -271,6 +330,7 @@ function animate(now) {
 
     angel.update(delta, elapsed, pointer);
     containment.update(delta, elapsed, pointer);
+    voice.update(delta, elapsed);
 
     hoverShadow.scale.x =
       1 +
@@ -286,5 +346,7 @@ function animate(now) {
   renderer.render(scene, camera);
   containment.afterRender(elapsed);
 }
+
+window.addEventListener("beforeunload", () => voice.dispose());
 
 requestAnimationFrame(animate);
