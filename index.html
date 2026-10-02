@@ -20,7 +20,7 @@
       <section class="hud" aria-label="Prototype controls">
         <div class="hud__label">
           <strong>THE BURNING WHEEL</strong>
-          <span>JOB 06 // THE TERRARIUM HAS A LARYNX</span>
+          <span>JOB 07 // LITTLE SKIT MACHINE</span>
         </div>
 
         <div class="hud__actions">
@@ -69,6 +69,39 @@
               <button id="voice-speak" type="button">SPEAK</button>
               <button id="voice-stop" type="button">STOP</button>
               <span id="voice-status" role="status" aria-live="polite">THROAT IDLE</span>
+            </div>
+          </div>
+
+          <div class="control-bank control-bank--skit">
+            <div class="control-bank__name">SKIT</div>
+            <div class="skit-console">
+              <textarea
+                id="skit-script"
+                rows="8"
+                spellcheck="false"
+                aria-label="Performance script"
+              ># tiny rat script v0
+AUTOCHAOS OFF
+EYE smug 2.5
+GESTURE leanIn 0.65
+SAY BE NOT AFRAID. I said what I said.
+BEAT 220ms
+EYE sideEye 1.6
+SAY Your coordinate system is adorable.
+GESTURE orientationSlip 0.55
+WAIT 700ms
+EYE deadpan 2
+SAY Anyway. You have mistaken certainty for knowledge.
+GESTURE judgment 0.65
+AUTOCHAOS ON</textarea>
+              <div class="skit-buttons">
+                <button id="skit-run" type="button">PERFORM</button>
+                <button id="skit-stop" type="button">STOP SKIT</button>
+              </div>
+              <span id="skit-status" role="status" aria-live="polite">SKIT IDLE</span>
+              <div class="skit-help">
+                SAY words · EYE mood seconds · GESTURE name intensity · WAIT 0.5s · BEAT 180ms · BLINK · AUTOCHAOS ON/OFF · RESET
+              </div>
             </div>
           </div>
 
