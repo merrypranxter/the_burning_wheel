@@ -219,6 +219,10 @@ function toggleMotion() {
   motionToggle.setAttribute("aria-pressed", String(!motionEnabled));
   motionToggle.textContent = motionEnabled ? "PAUSE MOTION" : "RESUME MOTION";
   containment.originalMotionText = motionToggle.textContent;
+
+  // Let rings naturally occlude the face while moving, but never allow a
+  // paused/frozen composition to settle with the central eye hidden.
+  angel.setEyeForegroundPriority(!motionEnabled, "paused");
 }
 
 motionToggle.addEventListener("click", toggleMotion);
