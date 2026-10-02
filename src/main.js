@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { BurningWheel } from "./character/BurningWheel.js";
 import { ContainmentEngine } from "./character/ContainmentEngine.js";
 import { PerformanceEngine } from "./performance/PerformanceEngine.js";
+import godRantSkit from "../skits/the-word-god-is-not-god.bwskit?raw";
 import { VoiceController } from "./voice/VoiceController.js";
 import "./style.css";
 
@@ -20,6 +21,7 @@ const skitScript = document.querySelector("#skit-script");
 const skitRun = document.querySelector("#skit-run");
 const skitStop = document.querySelector("#skit-stop");
 const skitStatus = document.querySelector("#skit-status");
+const skitLoadGodRant = document.querySelector("#skit-load-god-rant");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#168cff");
@@ -219,6 +221,19 @@ voiceText?.addEventListener("keydown", (event) => {
 
 skitRun?.addEventListener("click", runSkit);
 skitStop?.addEventListener("click", () => performanceEngine.stop());
+
+skitLoadGodRant?.addEventListener("click", () => {
+  if (!skitScript) return;
+  performanceEngine.stop({ silent: true });
+  skitScript.value = godRantSkit;
+  skitScript.scrollTop = 0;
+  skitScript.focus();
+
+  if (skitStatus) {
+    skitStatus.textContent = "LOADED // THE WORD \"GOD\" IS NOT GOD";
+    skitStatus.dataset.state = "idle";
+  }
+});
 
 skitScript?.addEventListener("keydown", (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
