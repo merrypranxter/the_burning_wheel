@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { BurningWheel } from "./character/BurningWheel.js";
 import "./style.css";
 
 const stage = document.querySelector("#stage");
@@ -61,66 +62,21 @@ const cloudLow = makePixelCloud(0.45);
 cloudLow.position.set(-2.75, -2.10, -4);
 world.add(cloudLow);
 
-const wheel = new THREE.Group();
-world.add(wheel);
-
-const gold = new THREE.MeshBasicMaterial({
-  color: "#ffc800",
-});
-
-const goldShadow = new THREE.MeshBasicMaterial({
-  color: "#9d6500",
-});
-
-const darkInset = new THREE.MeshBasicMaterial({
-  color: "#3c2500",
-});
-
-const shadowGeometry = new THREE.TorusGeometry(1.68, 0.25, 4, 36);
-const shadowRing = new THREE.Mesh(shadowGeometry, goldShadow);
-shadowRing.position.z = -0.05;
-wheel.add(shadowRing);
-
-const ringGeometry = new THREE.TorusGeometry(1.62, 0.19, 5, 36);
-const ring = new THREE.Mesh(ringGeometry, gold);
-wheel.add(ring);
-
-const insetGeometry = new THREE.TorusGeometry(1.62, 0.055, 4, 36);
-const inset = new THREE.Mesh(insetGeometry, darkInset);
-inset.position.z = 0.18;
-wheel.add(inset);
-
-for (let i = 0; i < 18; i += 1) {
-  const angle = (i / 18) * Math.PI * 2;
-  const geometry = new THREE.BoxGeometry(0.09, 0.09, 0.10);
-  const material = new THREE.MeshBasicMaterial({
-    color: i % 3 === 0 ? "#fff1a4" : "#d98c00",
-  });
-  const rivet = new THREE.Mesh(geometry, material);
-
-  rivet.position.set(
-    Math.cos(angle) * 1.62,
-    Math.sin(angle) * 1.62,
-    0.22
-  );
-  rivet.rotation.z = angle;
-  wheel.add(rivet);
-}
-
-wheel.rotation.x = 1.03;
-wheel.rotation.z = -0.22;
+const angel = new BurningWheel();
+angel.group.scale.setScalar(0.94);
+world.add(angel.group);
 
 const hoverShadow = new THREE.Mesh(
-  new THREE.RingGeometry(0.75, 1.55, 32),
+  new THREE.RingGeometry(0.72, 1.62, 32),
   new THREE.MeshBasicMaterial({
     color: "#0867c9",
     transparent: true,
-    opacity: 0.45,
+    opacity: 0.42,
     side: THREE.DoubleSide,
   })
 );
-hoverShadow.position.set(0, -2.18, -2.5);
-hoverShadow.scale.y = 0.33;
+hoverShadow.position.set(0, -2.28, -2.5);
+hoverShadow.scale.y = 0.31;
 world.add(hoverShadow);
 
 const pointer = new THREE.Vector2(0, 0);
@@ -167,8 +123,6 @@ function resize() {
   camera.bottom = -halfHeight;
   camera.updateProjectionMatrix();
 
-  // Render deliberately below display resolution, then let CSS nearest-neighbor
-  // scaling give us the chunky browser-toy pixel texture.
   const divisor = window.innerWidth < 700 ? 3.2 : 4.2;
   const renderWidth = Math.max(150, Math.round(window.innerWidth / divisor));
   const renderHeight = Math.max(150, Math.round(window.innerHeight / divisor));
@@ -179,6 +133,9 @@ function resize() {
   cloudBackLeft.position.x = -cloudSpread;
   cloudBackRight.position.x = cloudSpread;
   cloudLow.position.x = -cloudSpread * 0.9;
+
+  const characterScale = window.innerWidth < 520 ? 0.82 : 0.94;
+  angel.group.scale.setScalar(characterScale);
 }
 
 window.addEventListener("resize", resize);
@@ -192,21 +149,10 @@ function animate(now) {
 
   if (motionEnabled) {
     elapsed += delta;
+    angel.update(delta, elapsed, pointer);
 
-    wheel.rotation.y += delta * 0.56;
-    wheel.rotation.z += delta * 0.17;
-
-    const targetTiltX = 1.03 + pointer.y * 0.16;
-    const targetTiltZ = -0.22 - pointer.x * 0.13;
-
-    wheel.rotation.x += (targetTiltX - wheel.rotation.x) * 0.04;
-    wheel.rotation.z += (targetTiltZ - wheel.rotation.z) * 0.02;
-
-    wheel.position.y = Math.sin(elapsed * 1.25) * 0.10;
-    wheel.scale.setScalar(1 + Math.sin(elapsed * 0.88) * 0.012);
-
-    hoverShadow.scale.x = 1 + Math.sin(elapsed * 1.25) * 0.05;
-    hoverShadow.material.opacity = 0.40 - Math.sin(elapsed * 1.25) * 0.05;
+    hoverShadow.scale.x = 1 + Math.sin(elapsed * 1.16) * 0.055;
+    hoverShadow.material.opacity = 0.39 - Math.sin(elapsed * 1.16) * 0.045;
   }
 
   renderer.render(scene, camera);
