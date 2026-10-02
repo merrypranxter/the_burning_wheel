@@ -1,13 +1,22 @@
 {
   "name": "the-burning-wheel",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "private": true,
-  "description": "Modular persona cartridge and prompt compiler for The Burning Wheel.",
+  "description": "Modular persona cartridge and animated character engine for The Burning Wheel.",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "boot": "node runtime.mjs burning-wheel default",
     "serious": "node runtime.mjs burning-wheel serious",
     "roast": "node runtime.mjs burning-wheel cosmic-roast",
     "oracle": "node runtime.mjs burning-wheel oracle"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0"
   }
 }
