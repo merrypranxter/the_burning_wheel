@@ -363,10 +363,11 @@ export class WheelPanel {
   }
 
   drawSymbol() {
+    const ctx = this.ctx;
     this.clear("#05040a");
     const glyph = this.symbols[this.symbolIndex];
     const pulse = this.frame % 6 < 3 ? this.color : "#ffffff";
-    drawPixelGlyph(ctx = this.ctx, glyph, pulse, 12, 5, 3);
+    drawPixelGlyph(ctx, glyph, pulse, 12, 5, 3);
   }
 
   drawMarquee() {
