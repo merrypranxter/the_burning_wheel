@@ -11,6 +11,8 @@ const motionToggle = document.querySelector("#motion-toggle");
 const autoChaosToggle = document.querySelector("#auto-chaos");
 const realityReset = document.querySelector("#reality-reset");
 const statusLine = document.querySelector(".hud__label span");
+const controlLab = document.querySelector("#control-lab");
+const hudToggle = document.querySelector("#hud-toggle");
 
 const voiceText = document.querySelector("#voice-text");
 const voiceSpeak = document.querySelector("#voice-speak");
@@ -172,6 +174,18 @@ const performanceEngine = new PerformanceEngine({
   },
 });
 
+function setLabOpen(open) {
+  if (!controlLab || !hudToggle) return;
+
+  controlLab.classList.toggle("is-collapsed", !open);
+  hudToggle.setAttribute("aria-expanded", String(open));
+  hudToggle.textContent = open ? "CLOSE LAB" : "OPEN LAB";
+}
+
+hudToggle?.addEventListener("click", () => {
+  setLabOpen(controlLab?.classList.contains("is-collapsed"));
+});
+
 async function speakCurrentLine() {
   const line = voiceText?.value || "";
 
@@ -181,6 +195,7 @@ async function speakCurrentLine() {
     }
 
     voiceSpeak?.setAttribute("disabled", "");
+    setLabOpen(false);
     await voice.speak(line);
   } catch (error) {
     console.error(error);
@@ -197,6 +212,7 @@ async function runSkit() {
   const script = skitScript?.value || "";
 
   try {
+    setLabOpen(false);
     await performanceEngine.run(script);
   } catch (error) {
     console.error(error);
@@ -334,6 +350,11 @@ realityReset?.addEventListener("click", () => {
 
 window.addEventListener("keydown", (event) => {
   if (event.code === "Escape") {
+    if (controlLab && !controlLab.classList.contains("is-collapsed")) {
+      setLabOpen(false);
+      return;
+    }
+
     performanceEngine.stop({ silent: true });
     containment.reset();
     return;
@@ -349,6 +370,11 @@ window.addEventListener("keydown", (event) => {
   if (event.code === "Space" && event.target === document.body) {
     event.preventDefault();
     toggleMotion();
+    return;
+  }
+
+  if (event.code === "KeyH") {
+    setLabOpen(controlLab?.classList.contains("is-collapsed"));
     return;
   }
 
