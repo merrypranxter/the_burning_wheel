@@ -15,7 +15,7 @@ npm run dev
 
 Open the local Vite URL in a browser.
 
-### Current state — Job 05
+### Current state — Job 06
 
 The character now has a containment-failure / body-language engine on top of the existing nine-wheel body, independent eye/LED population, and expressive central eye.
 
@@ -35,6 +35,32 @@ Impossible gestures:
 The little ring eyes are no longer all using the same behavioral logic. Different panels independently follow the pointer, browser time, the central eye, fixed off-screen vectors, chaotic motion, or their own local random attention. During a dimension stutter they all temporarily abandon those controllers and panic.
 
 The containment engine also has low-frequency autonomous micro-events. Use **AUTO CHAOS** to disable them. **RESET REALITY** (or Escape) is deliberately kept outside the fake containment failure and restores the original geometry/UI.
+
+### ElevenLabs voice bridge
+
+Job 06 gives the browser body a server-side ElevenLabs throat without exposing the API key to the browser.
+
+The chain is:
+
+```
+text -> /speak Netlify Function -> ElevenLabs saved voice -> browser audio
+     -> Web Audio analyser -> wheel/core movement + phrase-hit gestures
+```
+
+The saved voice itself stays in ElevenLabs. The site only needs its voice ID.
+
+Set these environment variables on the Netlify project:
+
+- `ELEVENLABS_API_KEY` — secret; Functions scope
+- `ELEVENLABS_VOICE_ID` — the saved Burning Wheel voice ID
+- `ELEVENLABS_MODEL_ID` — optional; defaults to `eleven_v4`
+
+For local development, copy `.env.example` to `.env` and fill in your own values. Real `.env` files are gitignored.
+
+The `/speak` function is POST-only, caps a single utterance at 1200 characters, and applies a per-IP/domain rate limit so a public prototype cannot casually vaporize the ElevenLabs credit balance.
+
+The on-screen VOICE console is deliberately a test harness. Type a line and press **SPEAK** (or Cmd/Ctrl+Enter). **STOP** kills current playback. Later the dialogue/persona layer can call the same `VoiceController.speak(text)` method directly.
+
 
 Keyboard test controls:
 - `1–0`: central-eye expressions
