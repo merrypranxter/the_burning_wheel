@@ -267,6 +267,7 @@ export class BurningWheel {
     }
 
     this.pointerInfluence = new THREE.Vector2();
+    this.baseScale = 1;
   }
 
   update(delta, elapsed, pointer = { x: 0, y: 0 }) {
@@ -277,7 +278,7 @@ export class BurningWheel {
     const breath = 1 + Math.sin(elapsed * 0.83) * 0.012;
 
     this.group.position.y = bob;
-    this.group.scale.setScalar(breath);
+    this.group.scale.setScalar(this.baseScale * breath);
 
     this.body.rotation.y =
       this.pointerInfluence.x * 0.10 + Math.sin(elapsed * 0.31) * 0.035;
@@ -314,9 +315,8 @@ export class BurningWheel {
     }
   }
 
-  setMotionScale(scale = 1) {
-    for (const wheel of this.wheels) {
-      wheel.config.spin *= scale;
-    }
+  setBaseScale(scale = 1) {
+    this.baseScale = scale;
+    this.group.scale.setScalar(scale);
   }
 }
