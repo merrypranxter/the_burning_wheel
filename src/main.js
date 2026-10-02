@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { BurningWheel } from "./character/BurningWheel.js";
 import { ContainmentEngine } from "./character/ContainmentEngine.js";
+import { PerformanceEngine } from "./performance/PerformanceEngine.js";
 import { VoiceController } from "./voice/VoiceController.js";
 import "./style.css";
 
@@ -9,10 +10,16 @@ const motionToggle = document.querySelector("#motion-toggle");
 const autoChaosToggle = document.querySelector("#auto-chaos");
 const realityReset = document.querySelector("#reality-reset");
 const statusLine = document.querySelector(".hud__label span");
+
 const voiceText = document.querySelector("#voice-text");
 const voiceSpeak = document.querySelector("#voice-speak");
 const voiceStop = document.querySelector("#voice-stop");
 const voiceStatus = document.querySelector("#voice-status");
+
+const skitScript = document.querySelector("#skit-script");
+const skitRun = document.querySelector("#skit-run");
+const skitStop = document.querySelector("#skit-stop");
+const skitStatus = document.querySelector("#skit-status");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#168cff");
@@ -120,10 +127,49 @@ const voice = new VoiceController({
   },
 });
 
+const pointer = new THREE.Vector2(0, 0);
+let motionEnabled = true;
+let elapsed = 0;
+let previousTime = performance.now();
+
+const performanceEngine = new PerformanceEngine({
+  angel,
+  containment,
+  voice,
+  getElapsed: () => elapsed,
+  onState(state, detail = "") {
+    if (!skitStatus) return;
+
+    const labels = {
+      idle: "SKIT IDLE",
+      running: "PERFORMING",
+      complete: "SKIT COMPLETE",
+      error: "SKIT ERROR",
+    };
+
+    skitStatus.textContent = detail
+      ? `${labels[state] || state.toUpperCase()} // ${detail}`
+      : labels[state] || state.toUpperCase();
+    skitStatus.dataset.state = state;
+
+    if (skitRun) {
+      skitRun.toggleAttribute("disabled", state === "running");
+    }
+  },
+  onStep(step, index) {
+    if (!skitScript) return;
+    skitScript.dataset.activeLine = String(step.lineNumber || index + 1);
+  },
+});
+
 async function speakCurrentLine() {
   const line = voiceText?.value || "";
 
   try {
+    if (performanceEngine.running) {
+      performanceEngine.stop({ silent: true });
+    }
+
     voiceSpeak?.setAttribute("disabled", "");
     await voice.speak(line);
   } catch (error) {
@@ -137,13 +183,39 @@ async function speakCurrentLine() {
   }
 }
 
+async function runSkit() {
+  const script = skitScript?.value || "";
+
+  try {
+    await performanceEngine.run(script);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 voiceSpeak?.addEventListener("click", speakCurrentLine);
-voiceStop?.addEventListener("click", () => voice.stop());
+voiceStop?.addEventListener("click", () => {
+  if (performanceEngine.running) {
+    performanceEngine.stop();
+  } else {
+    voice.stop();
+  }
+});
 
 voiceText?.addEventListener("keydown", (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
     event.preventDefault();
     speakCurrentLine();
+  }
+});
+
+skitRun?.addEventListener("click", runSkit);
+skitStop?.addEventListener("click", () => performanceEngine.stop());
+
+skitScript?.addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+    event.preventDefault();
+    runSkit();
   }
 });
 
@@ -171,11 +243,6 @@ const GESTURE_KEYS = {
   KeyI: "projectionError",
   KeyO: "dimensionStutter",
 };
-
-const pointer = new THREE.Vector2(0, 0);
-let motionEnabled = true;
-let elapsed = 0;
-let previousTime = performance.now();
 
 document.querySelectorAll("[data-expression]").forEach((button) => {
   button.addEventListener("click", () => {
@@ -220,8 +287,6 @@ function toggleMotion() {
   motionToggle.textContent = motionEnabled ? "PAUSE MOTION" : "RESUME MOTION";
   containment.originalMotionText = motionToggle.textContent;
 
-  // Let rings naturally occlude the face while moving, but never allow a
-  // paused/frozen composition to settle with the central eye hidden.
   angel.setEyeForegroundPriority(!motionEnabled, "paused");
 }
 
@@ -236,12 +301,17 @@ autoChaosToggle?.addEventListener("click", () => {
 });
 
 realityReset?.addEventListener("click", () => {
-  voice.stop();
+  performanceEngine.stop({ silent: true });
   containment.reset();
+  if (skitStatus) {
+    skitStatus.textContent = "SKIT IDLE";
+    skitStatus.dataset.state = "idle";
+  }
 });
 
 window.addEventListener("keydown", (event) => {
   if (event.code === "Escape") {
+    performanceEngine.stop({ silent: true });
     containment.reset();
     return;
   }
@@ -351,6 +421,9 @@ function animate(now) {
   containment.afterRender(elapsed);
 }
 
-window.addEventListener("beforeunload", () => voice.dispose());
+window.addEventListener("beforeunload", () => {
+  performanceEngine.stop({ silent: true });
+  voice.dispose();
+});
 
 requestAnimationFrame(animate);
