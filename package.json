@@ -17,8 +17,6 @@
     "three": "^0.180.0"
   },
   "devDependencies": {
-    "vite": "^7.1.0",
-    "@netlify/functions": "^6.0.2",
-    "@netlify/vite-plugin": "^3.0.1"
+    "vite": "^7.1.0"
   }
 }
