@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open the local Vite URL in a browser. Job 03 now adds the eye/LED circus. Every golden wheel carries its own animated display panels: collage-style human eyes, LED eyes, pixel faces, hearts, crowns, arrows, stars, question marks, marquee sequences, and glitch tiles. The panels have independent blink/look timers, independent display animation, and a slow independent crawl around their own wheel track while the wheel itself continues spinning.
+Open the local Vite URL in a browser. Job 04 gives the central eye a real expression engine: pointer tracking, independent saccades, blinking, smooth expression blending, and named moods including smug, suspicious, wide, offended, delighted, deadpan, side-eye, eye-roll, and WTF. The on-screen mood buttons work on mobile; keyboard keys 1-0 trigger the same expressions and B forces a blink.
 
 Production build:
 
