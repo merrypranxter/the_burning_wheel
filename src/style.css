@@ -75,8 +75,23 @@ body {
   font-size: 1.1em;
 }
 
-#motion-toggle {
+.hud__actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  max-width: min(66vw, 720px);
+}
+
+.expressions {
   pointer-events: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.expressions button,
+#motion-toggle {
   appearance: none;
   border: 3px solid #120c00;
   border-radius: 0;
@@ -89,15 +104,31 @@ body {
   cursor: pointer;
 }
 
+.expressions button {
+  pointer-events: auto;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 5px 7px;
+  background: #fff7cf;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.4vw, 11px) / 1 "Courier New", Courier, monospace;
+  cursor: pointer;
+}
+
+.expressions button:hover,
+.expressions button:focus-visible,
+.expressions button.is-active,
 #motion-toggle:hover,
 #motion-toggle:focus-visible {
   background: #ff69cf;
   outline: none;
 }
 
+.expressions button:active,
 #motion-toggle:active {
   transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 #120c00;
+  box-shadow: 1px 1px 0 #120c00;
 }
 
 @media (max-width: 520px) {
@@ -109,7 +140,30 @@ body {
     max-width: 62vw;
   }
 
+  .hud {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .hud__label {
+    max-width: none;
+    justify-self: start;
+  }
+
+  .hud__actions {
+    max-width: 100%;
+    justify-items: stretch;
+  }
+
+  .expressions {
+    justify-content: flex-start;
+    max-height: 76px;
+    overflow-y: auto;
+    padding: 2px;
+  }
+
   #motion-toggle {
-    max-width: 32vw;
+    max-width: none;
+    justify-self: end;
   }
 }
