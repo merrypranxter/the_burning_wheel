@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open the local Vite URL in a browser. Job 01 currently renders a deliberately low-resolution pixel-art sky with one chunky golden wheel, idle motion, pointer-reactive tilt, mobile-safe resizing, and a pause/resume control.
+Open the local Vite URL in a browser. Job 02 now renders the character skeleton: nine independently moving golden wheels around a central core, each with its own axis, spin direction, speed, wobble, phase, and precession. The whole creature idles, floats, and reacts subtly to pointer movement while keeping the deliberately low-resolution pixel-art browser-toy look.
 
 Production build:
 
