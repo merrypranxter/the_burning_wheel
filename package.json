@@ -1,6 +1,6 @@
 {
   "name": "the-burning-wheel",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "private": true,
   "description": "Modular persona cartridge and animated character engine for The Burning Wheel.",
@@ -17,6 +17,8 @@
     "three": "^0.180.0"
   },
   "devDependencies": {
-    "vite": "^7.1.0"
+    "vite": "^7.1.0",
+    "@netlify/functions": "^6.0.2",
+    "@netlify/vite-plugin": "^3.0.1"
   }
 }
