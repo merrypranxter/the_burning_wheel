@@ -150,6 +150,11 @@ export class CoreEye {
     this.screen.position.z = 0.685;
     this.group.add(this.screen);
 
+    this.priorityReasons = new Set();
+    this.normalRenderOrder = this.screen.renderOrder;
+    this.normalDepthTest = this.screen.material.depthTest;
+    this.normalDepthWrite = this.screen.material.depthWrite;
+
     this.current = { ...EXPRESSIONS.neutral };
     this.target = { ...EXPRESSIONS.neutral };
     this.currentExpression = "neutral";
@@ -180,6 +185,28 @@ export class CoreEye {
 
   get expressionNames() {
     return Object.keys(EXPRESSIONS);
+  }
+
+  setForegroundPriority(enabled, reason = "manual") {
+    if (enabled) {
+      this.priorityReasons.add(reason);
+    } else {
+      this.priorityReasons.delete(reason);
+    }
+
+    const active = this.priorityReasons.size > 0;
+
+    if (active) {
+      this.screen.renderOrder = 10000;
+      this.screen.material.depthTest = false;
+      this.screen.material.depthWrite = false;
+    } else {
+      this.screen.renderOrder = this.normalRenderOrder;
+      this.screen.material.depthTest = this.normalDepthTest;
+      this.screen.material.depthWrite = this.normalDepthWrite;
+    }
+
+    this.screen.material.needsUpdate = true;
   }
 
   setExpression(name = "neutral", holdSeconds = 1.8, elapsed = 0) {
