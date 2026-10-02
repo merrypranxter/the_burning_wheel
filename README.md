@@ -34,6 +34,8 @@ Impossible gestures:
 
 The little ring eyes are no longer all using the same behavioral logic. Different panels independently follow the pointer, browser time, the central eye, fixed off-screen vectors, chaotic motion, or their own local random attention. During a dimension stutter they all temporarily abandon those controllers and panic.
 
+Frozen poses now protect central eye readability: rings may naturally pass in front of the face while moving, but pausing motion or entering the snapped phase of an orientation slip temporarily promotes the central eye above wheel depth so the final pose never lands with his face completely hidden.
+
 The containment engine also has low-frequency autonomous micro-events. Use **AUTO CHAOS** to disable them. **RESET REALITY** (or Escape) is deliberately kept outside the fake containment failure and restores the original geometry/UI.
 
 ### ElevenLabs voice bridge
