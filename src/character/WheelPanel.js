@@ -11,6 +11,15 @@ const PANEL_TYPES = [
   "glitch",
 ];
 
+const TRACKING_MODES = [
+  "pointer",
+  "clock",
+  "fixed",
+  "core",
+  "chaos",
+  "independent",
+];
+
 const NEON = [
   "#ff4fd8",
   "#6df7ff",
@@ -144,6 +153,7 @@ export class WheelPanel {
     color,
     driftSpeed,
     phase,
+    trackingMode = "independent",
   }) {
     this.id = id;
     this.radius = radius;
@@ -154,6 +164,7 @@ export class WheelPanel {
     this.color = color;
     this.driftSpeed = driftSpeed;
     this.phase = phase;
+    this.trackingMode = trackingMode;
 
     this.rng = mulberry32(hashString(id));
     this.canvas = document.createElement("canvas");
@@ -198,60 +209,145 @@ export class WheelPanel {
     this.nextBlinkAt = 0.8 + this.rng() * 3.8;
     this.blinkStart = -10;
     this.blinkDuration = 0.11 + this.rng() * 0.09;
+
     this.pupilX = (this.rng() - 0.5) * 0.8;
     this.pupilY = (this.rng() - 0.5) * 0.45;
     this.targetPupilX = this.pupilX;
     this.targetPupilY = this.pupilY;
+    this.fixedPupilX = (this.rng() - 0.5) * 1.45;
+    this.fixedPupilY = (this.rng() - 0.5) * 0.75;
     this.nextLookAt = 0.4 + this.rng() * 2.0;
+
     this.symbols = ["heart", "eye", "crown", "arrow", "star", "question", "smile"];
     this.symbolIndex = Math.floor(this.rng() * this.symbols.length);
     this.irisColor = IRIS[Math.floor(this.rng() * IRIS.length)];
     this.paperTone = this.rng() > 0.5 ? "#f7efe3" : "#ece7d8";
     this.glitchSeed = Math.floor(this.rng() * 10000);
 
+    this.panicUntil = -1;
+    this.panicIntensity = 0;
+    this.panicActive = false;
+
     this.positionOnTrack(this.baseAngle);
     this.draw(0);
   }
 
-  positionOnTrack(angle) {
+  setPanic(elapsed, duration = 0.8, intensity = 1) {
+    this.panicUntil = Math.max(this.panicUntil, elapsed + duration);
+    this.panicIntensity = Math.max(this.panicIntensity, intensity);
+  }
+
+  positionOnTrack(angle, jitterX = 0, jitterY = 0, jitterZ = 0) {
     this.trackAngle = angle;
     this.group.position.set(
-      Math.cos(angle) * this.radius,
-      Math.sin(angle) * this.radius,
-      this.tube * 1.48
+      Math.cos(angle) * this.radius + jitterX,
+      Math.sin(angle) * this.radius + jitterY,
+      this.tube * 1.48 + jitterZ
     );
     this.group.rotation.z = angle + Math.PI / 2;
   }
 
-  update(delta, elapsed) {
-    this.positionOnTrack(this.trackAngle + delta * this.driftSpeed);
+  updateTracking(elapsed, context) {
+    const pointer = context.pointer || { x: 0, y: 0 };
+    const coreEye = context.coreEye;
 
-    if (elapsed >= this.nextLookAt) {
-      this.targetPupilX = (this.rng() - 0.5) * 1.05;
-      this.targetPupilY = (this.rng() - 0.5) * 0.55;
-      this.nextLookAt = elapsed + 0.55 + this.rng() * 2.6;
+    switch (this.trackingMode) {
+      case "pointer":
+        this.targetPupilX = clamp(pointer.x * 1.25, -1.2, 1.2);
+        this.targetPupilY = clamp(-pointer.y * 0.7, -0.7, 0.7);
+        break;
+
+      case "clock":
+        this.targetPupilX = Math.sin(elapsed * 0.73 + this.phase) * 1.05;
+        this.targetPupilY = Math.cos(elapsed * 0.41 + this.phase) * 0.5;
+        break;
+
+      case "fixed":
+        this.targetPupilX = this.fixedPupilX;
+        this.targetPupilY = this.fixedPupilY;
+        break;
+
+      case "core":
+        this.targetPupilX = clamp((coreEye?.lookX || 0) * 4.2, -1.1, 1.1);
+        this.targetPupilY = clamp((coreEye?.lookY || 0) * 3.4, -0.65, 0.65);
+        break;
+
+      case "chaos":
+        this.targetPupilX =
+          Math.sin(elapsed * 1.71 + Math.sin(elapsed * 0.33 + this.phase) * 5) *
+          1.1;
+        this.targetPupilY =
+          Math.cos(elapsed * 1.13 + Math.sin(elapsed * 0.52 + this.phase) * 4) *
+          0.58;
+        break;
+
+      default:
+        if (elapsed >= this.nextLookAt) {
+          this.targetPupilX = (this.rng() - 0.5) * 1.05;
+          this.targetPupilY = (this.rng() - 0.5) * 0.55;
+          this.nextLookAt = elapsed + 0.55 + this.rng() * 2.6;
+        }
+        break;
+    }
+  }
+
+  update(delta, elapsed, context = {}) {
+    this.panicActive = elapsed <= this.panicUntil;
+
+    if (!this.panicActive && elapsed > this.panicUntil) {
+      this.panicIntensity *= 0.82;
     }
 
-    this.pupilX += (this.targetPupilX - this.pupilX) * 0.08;
-    this.pupilY += (this.targetPupilY - this.pupilY) * 0.08;
+    this.updateTracking(elapsed, context);
 
-    if (elapsed >= this.nextBlinkAt) {
+    if (this.panicActive) {
+      const violence = this.panicIntensity;
+      this.targetPupilX =
+        Math.sin(elapsed * 31 + this.phase * 4.7) * 1.35 * violence;
+      this.targetPupilY =
+        Math.cos(elapsed * 27 + this.phase * 3.1) * 0.72 * violence;
+    }
+
+    this.pupilX += (this.targetPupilX - this.pupilX) * (this.panicActive ? 0.34 : 0.08);
+    this.pupilY += (this.targetPupilY - this.pupilY) * (this.panicActive ? 0.34 : 0.08);
+
+    const jitter = this.panicActive ? this.panicIntensity : 0;
+    const jitterX = Math.sin(elapsed * 43 + this.phase) * this.tube * 0.5 * jitter;
+    const jitterY = Math.cos(elapsed * 37 + this.phase * 2) * this.tube * 0.42 * jitter;
+    const jitterZ = Math.sin(elapsed * 51 + this.phase * 3) * this.tube * 0.75 * jitter;
+
+    this.positionOnTrack(
+      this.trackAngle + delta * this.driftSpeed,
+      jitterX,
+      jitterY,
+      jitterZ
+    );
+
+    if (!this.panicActive && elapsed >= this.nextBlinkAt) {
       this.blinkStart = elapsed;
       this.blinkDuration = 0.08 + this.rng() * 0.15;
       this.nextBlinkAt = elapsed + 1.1 + this.rng() * 4.8;
     }
 
     const needsFastEyeFrames =
-      this.type === "cutout-eye" || this.type === "led-eye" || this.type === "face";
+      this.type === "cutout-eye" ||
+      this.type === "led-eye" ||
+      this.type === "face";
 
-    const interval = needsFastEyeFrames ? 0.07 : 0.11 + this.rng() * 0.05;
+    const interval = this.panicActive
+      ? 0.025
+      : needsFastEyeFrames
+        ? 0.07
+        : 0.11 + this.rng() * 0.05;
 
     if (elapsed >= this.nextFrameAt) {
       this.frame += 1;
       this.nextFrameAt = elapsed + interval;
 
-      if (this.type === "symbol" && this.frame % 10 === 0) {
-        this.symbolIndex = (this.symbolIndex + 1) % this.symbols.length;
+      if (this.type === "symbol" && (this.panicActive || this.frame % 10 === 0)) {
+        this.symbolIndex =
+          (this.symbolIndex + 1 + (this.panicActive ? 2 : 0)) %
+          this.symbols.length;
       }
 
       this.draw(elapsed);
@@ -259,6 +355,8 @@ export class WheelPanel {
   }
 
   blinkAmount(elapsed) {
+    if (this.panicActive) return 0;
+
     const age = elapsed - this.blinkStart;
     if (age < 0 || age > this.blinkDuration) return 0;
     const phase = age / this.blinkDuration;
@@ -273,11 +371,12 @@ export class WheelPanel {
   drawCutoutEye(elapsed) {
     const ctx = this.ctx;
     const blink = this.blinkAmount(elapsed);
-    const lid = 1 - blink * 0.93;
+    const lid = this.panicActive
+      ? 1.18
+      : clamp(1 - blink * 0.93, 0.08, 1);
 
-    this.clear("#1d1209");
+    this.clear(this.panicActive ? "#2a001f" : "#1d1209");
 
-    // Deliberately imperfect magazine-cutout paper rectangle.
     ctx.fillStyle = this.paperTone;
     ctx.beginPath();
     ctx.moveTo(4, 5);
@@ -299,15 +398,22 @@ export class WheelPanel {
 
     const irisX = 24 + this.pupilX * 5.2;
     const irisY = eyeY + this.pupilY * 3.0;
+    const irisRadius = this.panicActive ? 6.3 : Math.max(2.2, 5.4 * lid);
 
     ctx.fillStyle = this.irisColor;
     ctx.beginPath();
-    ctx.arc(irisX, irisY, Math.max(2.2, 5.4 * lid), 0, Math.PI * 2);
+    ctx.arc(irisX, irisY, irisRadius, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "#15100d";
     ctx.beginPath();
-    ctx.arc(irisX, irisY, Math.max(1.4, 2.9 * lid), 0, Math.PI * 2);
+    ctx.arc(
+      irisX,
+      irisY,
+      this.panicActive ? 2.0 : Math.max(1.4, 2.9 * lid),
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
 
     if (lid > 0.22) {
@@ -325,27 +431,24 @@ export class WheelPanel {
     ctx.moveTo(7, eyeY);
     ctx.quadraticCurveTo(24, eyeY + 10 * lid, 41, eyeY);
     ctx.stroke();
-
-    ctx.fillStyle = "#d46c78";
-    ctx.fillRect(7, eyeY, 2, 2);
   }
 
   drawLedEye(elapsed) {
     const ctx = this.ctx;
     const blink = this.blinkAmount(elapsed);
-    const openness = 1 - blink * 0.95;
+    const openness = this.panicActive ? 1.15 : 1 - blink * 0.95;
 
     this.clear("#020509");
 
-    ctx.fillStyle = "#151c23";
+    ctx.fillStyle = this.panicActive ? "#27102d" : "#151c23";
     for (let x = 2; x < 48; x += 4) {
       for (let y = 2; y < 28; y += 4) {
         ctx.fillRect(x, y, 1, 1);
       }
     }
 
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = this.panicActive ? "#ffffff" : this.color;
+    ctx.lineWidth = this.panicActive ? 3 : 2;
     ctx.beginPath();
     ctx.moveTo(5, 14);
     ctx.quadraticCurveTo(24, 4 + 9 * (1 - openness), 43, 14);
@@ -355,7 +458,7 @@ export class WheelPanel {
     if (openness > 0.18) {
       const x = 24 + this.pupilX * 5.5;
       const y = 14 + this.pupilY * 2.5;
-      ctx.fillStyle = this.color;
+      ctx.fillStyle = this.panicActive ? "#ff4fd8" : this.color;
       ctx.fillRect(Math.round(x - 3), Math.round(y - 3), 6, 6);
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(Math.round(x - 1), Math.round(y - 1), 2, 2);
@@ -364,9 +467,13 @@ export class WheelPanel {
 
   drawSymbol() {
     const ctx = this.ctx;
-    this.clear("#05040a");
+    this.clear(this.panicActive ? "#200018" : "#05040a");
     const glyph = this.symbols[this.symbolIndex];
-    const pulse = this.frame % 6 < 3 ? this.color : "#ffffff";
+    const pulse = this.panicActive
+      ? NEON[this.frame % NEON.length]
+      : this.frame % 6 < 3
+        ? this.color
+        : "#ffffff";
     drawPixelGlyph(ctx, glyph, pulse, 12, 5, 3);
   }
 
@@ -374,14 +481,16 @@ export class WheelPanel {
     const ctx = this.ctx;
     this.clear("#020409");
 
-    const glyphs = ["arrow", "heart", "eye", "arrow"];
+    const glyphs = this.panicActive
+      ? ["eye", "question", "eye", "question"]
+      : ["arrow", "heart", "eye", "arrow"];
     const shift = -(this.frame % 14) * 3;
 
     glyphs.forEach((glyph, index) => {
       drawPixelGlyph(
         ctx,
         glyph,
-        NEON[(index + this.symbolIndex) % NEON.length],
+        NEON[(index + this.symbolIndex + this.frame) % NEON.length],
         0,
         5,
         2,
@@ -395,14 +504,19 @@ export class WheelPanel {
     this.clear("#160616");
 
     const blink = this.blinkAmount(elapsed);
-    const eyeHeight = blink > 0.6 ? 1 : 3;
+    const eyeHeight = this.panicActive ? 6 : blink > 0.6 ? 1 : 3;
 
-    ctx.fillStyle = this.color;
+    ctx.fillStyle = this.panicActive ? "#6df7ff" : this.color;
     ctx.fillRect(8, 4, 32, 20);
 
     ctx.fillStyle = "#09030a";
-    ctx.fillRect(15, 10, 5, eyeHeight);
-    ctx.fillRect(29, 10, 5, eyeHeight);
+    ctx.fillRect(15, 9, 5, eyeHeight);
+    ctx.fillRect(29, 9, 5, eyeHeight);
+
+    if (this.panicActive) {
+      ctx.fillRect(20, 19, 9, 4);
+      return;
+    }
 
     const mood = Math.floor((this.frame / 16 + this.phase) % 4);
     if (mood === 0) {
@@ -423,7 +537,9 @@ export class WheelPanel {
     this.clear("#040404");
 
     const local = mulberry32(this.glitchSeed + this.frame * 131);
-    for (let i = 0; i < 20; i += 1) {
+    const count = this.panicActive ? 42 : 20;
+
+    for (let i = 0; i < count; i += 1) {
       ctx.fillStyle = NEON[Math.floor(local() * NEON.length)];
       const x = Math.floor(local() * 48);
       const y = Math.floor(local() * 28);
@@ -432,7 +548,7 @@ export class WheelPanel {
       ctx.fillRect(x, y, w, h);
     }
 
-    if (this.frame % 5 !== 0) {
+    if (this.frame % 5 !== 0 || this.panicActive) {
       drawPixelGlyph(ctx, "eye", "#ffffff", 12, 5, 3);
     }
   }
@@ -467,7 +583,13 @@ export class WheelPanel {
   }
 }
 
-export function buildWheelPanels({ wheelId, wheelIndex, radius, tube, slotHint }) {
+export function buildWheelPanels({
+  wheelId,
+  wheelIndex,
+  radius,
+  tube,
+  slotHint,
+}) {
   const count = Math.max(4, Math.round(slotHint / 3));
   const panels = [];
 
@@ -479,6 +601,8 @@ export function buildWheelPanels({ wheelId, wheelIndex, radius, tube, slotHint }
     const angle = (i / count) * Math.PI * 2 + 0.16 + rng() * 0.12;
     const direction = rng() > 0.48 ? 1 : -1;
     const driftSpeed = direction * (0.012 + rng() * 0.032);
+    const trackingMode =
+      TRACKING_MODES[(wheelIndex + i * 2) % TRACKING_MODES.length];
 
     panels.push(
       new WheelPanel({
@@ -490,6 +614,7 @@ export function buildWheelPanels({ wheelId, wheelIndex, radius, tube, slotHint }
         color,
         driftSpeed,
         phase: rng() * Math.PI * 2,
+        trackingMode,
       })
     );
   }
