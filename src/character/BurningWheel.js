@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { buildWheelPanels } from "./WheelPanel.js";
 
 const GOLD = "#ffc400";
 const GOLD_LIGHT = "#fff0a0";
@@ -136,27 +137,7 @@ function addRivets(rotor, radius, tube, count) {
   }
 }
 
-function addSkeletonSlots(rotor, radius, tube, count) {
-  const slotCount = Math.max(4, Math.round(count / 3));
-  const geometry = new THREE.BoxGeometry(tube * 2.5, tube * 1.18, tube * 0.58);
-  const material = makeMaterial(GOLD_DEEP);
-
-  for (let i = 0; i < slotCount; i += 1) {
-    const angle = (i / slotCount) * Math.PI * 2 + 0.18;
-    const slot = new THREE.Mesh(geometry, material);
-
-    slot.position.set(
-      Math.cos(angle) * radius,
-      Math.sin(angle) * radius,
-      tube * 1.28
-    );
-    slot.rotation.z = angle + Math.PI / 2;
-    slot.userData.kind = "future-panel-slot";
-    rotor.add(slot);
-  }
-}
-
-function createWheel(config) {
+function createWheel(config, wheelIndex) {
   const carrier = new THREE.Group();
   carrier.name = `wheel-carrier:${config.id}`;
 
@@ -185,7 +166,18 @@ function createWheel(config) {
   rotor.add(innerStripe);
 
   addRivets(rotor, config.radius, config.tube, config.slots);
-  addSkeletonSlots(rotor, config.radius, config.tube, config.slots);
+
+  const panels = buildWheelPanels({
+    wheelId: config.id,
+    wheelIndex,
+    radius: config.radius,
+    tube: config.tube,
+    slotHint: config.slots,
+  });
+
+  for (const panel of panels) {
+    rotor.add(panel.group);
+  }
 
   carrier.rotation.set(...config.tilt);
 
@@ -193,6 +185,7 @@ function createWheel(config) {
     config,
     carrier,
     rotor,
+    panels,
     baseRotation: new THREE.Euler(...config.tilt),
     spinAngle: config.phase * 0.5,
   };
@@ -261,7 +254,7 @@ export class BurningWheel {
     this.core = createCore();
     this.body.add(this.core);
 
-    this.wheels = wheelConfigs.map((config) => createWheel(config));
+    this.wheels = wheelConfigs.map((config, index) => createWheel(config, index));
     for (const wheel of this.wheels) {
       this.body.add(wheel.carrier);
     }
@@ -312,6 +305,10 @@ export class BurningWheel {
         Math.sin(elapsed * config.precession[2] * 8 + config.phase * 1.17) *
           config.wobble +
         Math.cos(elapsed * 0.23 + config.phase) * config.precession[2];
+
+      for (const panel of wheel.panels) {
+        panel.update(delta, elapsed);
+      }
     }
   }
 
