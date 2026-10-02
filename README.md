@@ -15,7 +15,7 @@ npm run dev
 
 Open the local Vite URL in a browser.
 
-### Current state — Job 06
+### Current state — Job 07
 
 The character now has a containment-failure / body-language engine on top of the existing nine-wheel body, independent eye/LED population, and expressive central eye.
 
@@ -37,6 +37,42 @@ The little ring eyes are no longer all using the same behavioral logic. Differen
 Frozen poses now protect central eye readability: rings may naturally pass in front of the face while moving, but pausing motion or entering the snapped phase of an orientation slip temporarily promotes the central eye above wheel depth so the final pose never lands with his face completely hidden.
 
 The containment engine also has low-frequency autonomous micro-events. Use **AUTO CHAOS** to disable them. **RESET REALITY** (or Escape) is deliberately kept outside the fake containment failure and restores the original geometry/UI.
+
+### Little skit machine
+
+Job 07 adds a tiny performance DSL and runner. A skit is just editable text, not hard-coded animation. The engine executes commands sequentially and can wait for ElevenLabs speech to actually finish before moving to the next beat.
+
+Supported commands:
+
+- `SAY words here` — speak the rest of the line and wait for playback to finish
+- `EYE smug 2.5` — set a named central-eye expression and optional hold time in seconds
+- `GESTURE orientationSlip 0.6` — trigger a named body/containment verb at an optional intensity
+- `BREACH projectionError 0.8` — alias for `GESTURE`
+- `WAIT 0.7s` or `WAIT 250ms` — explicit timing
+- `BEAT 180ms` — readable timing punctuation; same timer semantics as `WAIT`
+- `BLINK` — force a central blink
+- `AUTOCHAOS ON` / `AUTOCHAOS OFF` — control autonomous weirdness inside a performance
+- `RESET` — restore the containment scene
+
+The on-screen SKIT editor includes a working sample. **PERFORM** runs it; **STOP SKIT** cancels current speech/timing without nuking the whole page. Cmd/Ctrl+Enter also runs the current skit.
+
+Example:
+
+```text
+AUTOCHAOS OFF
+EYE smug 2.5
+GESTURE leanIn 0.65
+SAY BE NOT AFRAID. I said what I said.
+BEAT 220ms
+EYE sideEye 1.6
+SAY Your coordinate system is adorable.
+GESTURE orientationSlip 0.55
+WAIT 700ms
+EYE deadpan 2
+SAY Anyway. You have mistaken certainty for knowledge.
+GESTURE judgment 0.65
+AUTOCHAOS ON
+```
 
 ### ElevenLabs voice bridge
 
@@ -95,6 +131,8 @@ The repo is intentionally split into layers:
 - `src/character/CoreEye.js` — central facial expression system
 - `src/character/WheelPanel.js` — independent eyes/LEDs/panel behaviors
 - `src/character/ContainmentEngine.js` — gestures, impossible geometry, DOM infection, depth-buffer sabotage, historical-frame smear, and containment state
+- `src/voice/VoiceController.js` — ElevenLabs playback, Web Audio analysis, and body reaction to speech
+- `src/performance/PerformanceEngine.js` — parser and sequential skit runner
 
 That separation is deliberate: dialogue/performance logic can call named character verbs later without having to know how the renderer produces them.
 
@@ -122,3 +160,8 @@ That prints one compiled prompt assembled from the core, controls, and selected 
 ## Important
 
 Persona voice is presentation, not evidence. The angel should distinguish scripture, history, interpretation, speculation, mathematics, and factual claims instead of making shit up with confidence.
+
+
+## Visual polish backlog
+
+The ring-eye system is structurally correct but not visually final. Replace the current banner-like display treatment on many eye panels with round eyeball-like forms: visible white sclera + iris/pupil, closer to loose eyeballs embedded around the gold wheels. Preserve their independent tracking modes and panic behavior while changing the visual shell.
