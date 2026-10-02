@@ -4,7 +4,7 @@ A modular persona cartridge for an impossible biblical angelic intelligence: oph
 
 ## Animated character prototype
 
-The repo now also contains the beginning of the Burning Wheel's browser body.
+The repo now also contains the Burning Wheel's browser body.
 
 ### Run it
 
@@ -13,7 +13,43 @@ npm install
 npm run dev
 ```
 
-Open the local Vite URL in a browser. Job 04 gives the central eye a real expression engine: pointer tracking, independent saccades, blinking, smooth expression blending, and named moods including smug, suspicious, wide, offended, delighted, deadpan, side-eye, eye-roll, and WTF. The on-screen mood buttons work on mobile; keyboard keys 1-0 trigger the same expressions and B forces a blink.
+Open the local Vite URL in a browser.
+
+### Current state — Job 05
+
+The character now has a containment-failure / body-language engine on top of the existing nine-wheel body, independent eye/LED population, and expressive central eye.
+
+Normal-ish gestures:
+- `leanIn`
+- `recoil`
+- `judgment`
+- `flare`
+- `attractorDrift`
+
+Impossible gestures:
+- `orientationSlip` — smears historical frames, then snaps into a new persistent orientation
+- `mobiusFlip` — selected wheels reverse apparent orientation through a non-orientable-looking flip
+- `projectionError` — intentionally sabotages depth testing/render order
+- `dimensionStutter` — de-syncs and panics the eye population, jitters geometry, infects the UI, tears the sky, and produces scanline/channel-smear corruption
+
+The little ring eyes are no longer all using the same behavioral logic. Different panels independently follow the pointer, browser time, the central eye, fixed off-screen vectors, chaotic motion, or their own local random attention. During a dimension stutter they all temporarily abandon those controllers and panic.
+
+The containment engine also has low-frequency autonomous micro-events. Use **AUTO CHAOS** to disable them. **RESET REALITY** (or Escape) is deliberately kept outside the fake containment failure and restores the original geometry/UI.
+
+Keyboard test controls:
+- `1–0`: central-eye expressions
+- `B`: blink
+- `Q`: lean in
+- `W`: recoil
+- `E`: judgment
+- `R`: flare
+- `T`: attractor drift
+- `Y`: orientation slip
+- `U`: Möbius flip
+- `I`: projection error
+- `O`: dimension stutter
+- `Space`: pause/resume
+- `Esc`: reset reality
 
 Production build:
 
@@ -21,6 +57,18 @@ Production build:
 npm run build
 npm run preview
 ```
+
+## Architecture
+
+The repo is intentionally split into layers:
+
+- `personas/` — the mind/voice cartridge
+- `src/character/BurningWheel.js` — the body and wheel hierarchy
+- `src/character/CoreEye.js` — central facial expression system
+- `src/character/WheelPanel.js` — independent eyes/LEDs/panel behaviors
+- `src/character/ContainmentEngine.js` — gestures, impossible geometry, DOM infection, depth-buffer sabotage, historical-frame smear, and containment state
+
+That separation is deliberate: dialogue/performance logic can call named character verbs later without having to know how the renderer produces them.
 
 ## Gemini Import Code
 
