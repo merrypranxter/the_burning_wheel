@@ -202,6 +202,7 @@ export class ContainmentEngine {
 
   cleanupTransient() {
     this.setDepthSabotage(false);
+    this.angel.setEyeForegroundPriority?.(false, "containment-freeze");
 
     for (const wheel of this.angel.wheels) {
       wheel.carrier.scale.set(1, 1, 1);
@@ -415,6 +416,7 @@ export class ContainmentEngine {
         this.snapOrientation();
         state.frozenRotors = this.angel.wheels.map((wheel) => wheel.rotor.rotation.z);
         state.frozenCarriers = this.angel.wheels.map((wheel) => wheel.carrier.rotation.clone());
+        this.angel.setEyeForegroundPriority?.(true, "containment-freeze");
       }
 
       if (state.snapped && state.frozenRotors && progress < 0.93) {
@@ -422,6 +424,8 @@ export class ContainmentEngine {
           wheel.rotor.rotation.z = state.frozenRotors[index];
           wheel.carrier.rotation.copy(state.frozenCarriers[index]);
         });
+      } else if (state.snapped) {
+        this.angel.setEyeForegroundPriority?.(false, "containment-freeze");
       }
     }
 
