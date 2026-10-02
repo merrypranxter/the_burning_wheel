@@ -63,7 +63,7 @@ cloudLow.position.set(-2.75, -2.10, -4);
 world.add(cloudLow);
 
 const angel = new BurningWheel();
-angel.group.scale.setScalar(0.94);
+angel.setBaseScale(0.94);
 world.add(angel.group);
 
 const hoverShadow = new THREE.Mesh(
@@ -135,7 +135,7 @@ function resize() {
   cloudLow.position.x = -cloudSpread * 0.9;
 
   const characterScale = window.innerWidth < 520 ? 0.82 : 0.94;
-  angel.group.scale.setScalar(characterScale);
+  angel.setBaseScale(characterScale);
 }
 
 window.addEventListener("resize", resize);
