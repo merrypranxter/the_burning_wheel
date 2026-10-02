@@ -320,9 +320,7 @@ window.addEventListener("resize", resize);
 resize();
 
 function animate(now) {
-  window.addEventListener("beforeunload", () => voice.dispose());
-
-requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 
   const delta = Math.min((now - previousTime) / 1000, 0.05);
   previousTime = now;
@@ -348,5 +346,7 @@ requestAnimationFrame(animate);
   renderer.render(scene, camera);
   containment.afterRender(elapsed);
 }
+
+window.addEventListener("beforeunload", () => voice.dispose());
 
 requestAnimationFrame(animate);
