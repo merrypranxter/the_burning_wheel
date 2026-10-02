@@ -408,6 +408,7 @@ html[style*="--breach: 1"] .hud__label {
   gap: 4px;
 }
 
+#skit-load-god-rant,
 #skit-run,
 #skit-stop {
   appearance: none;
@@ -419,6 +420,10 @@ html[style*="--breach: 1"] .hud__label {
   font: 700 clamp(8px, 1.25vw, 10px) / 1 "Courier New", Courier, monospace;
   cursor: pointer;
   white-space: nowrap;
+}
+
+#skit-load-god-rant {
+  background: #ffe84d;
 }
 
 #skit-run {
@@ -469,6 +474,7 @@ html[style*="--breach: 1"] .hud__label {
   font: 700 7px/1.25 "Courier New", Courier, monospace;
 }
 
+#skit-load-god-rant:active,
 #skit-run:active,
 #skit-stop:active {
   transform: translate(2px, 2px);
@@ -503,6 +509,7 @@ html[style*="--breach: 1"] .hud__label {
     padding: 5px 6px;
   }
 
+  #skit-load-god-rant,
   #skit-run,
   #skit-stop {
     padding: 6px 5px;
