@@ -66,6 +66,30 @@ const angel = new BurningWheel();
 angel.setBaseScale(0.94);
 world.add(angel.group);
 
+const EXPRESSION_KEYS = {
+  Digit1: "neutral",
+  Digit2: "smug",
+  Digit3: "suspicious",
+  Digit4: "wide",
+  Digit5: "offended",
+  Digit6: "delighted",
+  Digit7: "deadpan",
+  Digit8: "sideEye",
+  Digit9: "eyeRoll",
+  Digit0: "wtf",
+};
+
+document.querySelectorAll("[data-expression]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const expression = button.dataset.expression;
+    angel.setExpression(expression, expression === "neutral" ? 0 : 2.4, elapsed);
+
+    document.querySelectorAll("[data-expression]").forEach((item) => {
+      item.classList.toggle("is-active", item === button);
+    });
+  });
+});
+
 const hoverShadow = new THREE.Mesh(
   new THREE.RingGeometry(0.72, 1.62, 32),
   new THREE.MeshBasicMaterial({
@@ -109,6 +133,17 @@ window.addEventListener("keydown", (event) => {
   if (event.code === "Space" && event.target === document.body) {
     event.preventDefault();
     toggleMotion();
+    return;
+  }
+
+  if (event.code === "KeyB") {
+    angel.blink(elapsed);
+    return;
+  }
+
+  const expression = EXPRESSION_KEYS[event.code];
+  if (expression) {
+    angel.setExpression(expression, expression === "neutral" ? 0 : 2.4, elapsed);
   }
 });
 
