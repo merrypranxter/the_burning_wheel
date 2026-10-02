@@ -149,7 +149,11 @@ export class VoiceController {
   async speakAndWait(text) {
     await this.speak(text);
 
-    if (this.audio.ended || this.audio.paused) {
+    if (this.audio.ended) {
+      return { reason: "ended", cancelled: false };
+    }
+
+    if (this.audio.paused) {
       return { reason: "stopped", cancelled: true };
     }
 
