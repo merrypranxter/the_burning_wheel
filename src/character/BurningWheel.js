@@ -246,6 +246,32 @@ export class BurningWheel {
     this.group.scale.setScalar(scale);
   }
 
+  applyVoiceEnergy({ rms = 0, low = 0, high = 0, onset = 0 } = {}, elapsed = 0) {
+    const energy = Math.max(0, Math.min(1, rms));
+    const bass = Math.max(0, Math.min(1, low));
+    const edge = Math.max(0, Math.min(1, high));
+
+    this.body.position.z += energy * 0.13;
+    this.body.rotation.z += Math.sin(elapsed * 13.0) * edge * 0.024;
+    this.core.scale.multiplyScalar(1 + energy * 0.11 + bass * 0.035);
+
+    this.wheels.forEach((wheel, index) => {
+      const direction = index % 2 === 0 ? 1 : -1;
+      wheel.carrier.rotation.z +=
+        direction * bass * (0.012 + index * 0.0018);
+      wheel.rotor.rotation.z +=
+        direction * edge * (0.014 + (index % 3) * 0.006);
+
+      const expansion =
+        1 + energy * (index % 3 === 0 ? 0.014 : 0.005);
+      wheel.carrier.scale.multiplyScalar(expansion);
+    });
+
+    if (onset > 0.68) {
+      this.eye.group.rotation.z += (Math.random() - 0.5) * onset * 0.04;
+    }
+  }
+
   setExpression(name, holdSeconds = 1.8, elapsed = 0) {
     this.eye?.setExpression(name, holdSeconds, elapsed);
   }
