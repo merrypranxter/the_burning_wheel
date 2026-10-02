@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { buildWheelPanels } from "./WheelPanel.js";
+import { buildWheelPanels } from "./WheelPanel.js";\nimport { CoreEye } from "./CoreEye.js";
 
 const GOLD = "#ffc400";
 const GOLD_LIGHT = "#fff0a0";
@@ -224,6 +224,9 @@ function createCore() {
   innerSocket.position.z = 0.635;
   core.add(innerSocket);
 
+  const eye = new CoreEye();
+  core.add(eye.group);
+
   for (let i = 0; i < 12; i += 1) {
     const angle = (i / 12) * Math.PI * 2;
     const rivet = new THREE.Mesh(
@@ -251,7 +254,9 @@ export class BurningWheel {
     this.body.name = "body";
     this.group.add(this.body);
 
-    this.core = createCore();
+    const coreParts = createCore();
+    this.core = coreParts.core;
+    this.eye = coreParts.eye;
     this.body.add(this.core);
 
     this.wheels = wheelConfigs.map((config, index) => createWheel(config, index));
@@ -281,6 +286,7 @@ export class BurningWheel {
 
     this.core.rotation.z = Math.sin(elapsed * 0.52) * 0.08;
     this.core.scale.setScalar(1 + Math.sin(elapsed * 1.7) * 0.018);
+    this.eye.update(delta, elapsed, pointer);
 
     for (const wheel of this.wheels) {
       const { config, carrier, rotor, baseRotation } = wheel;
@@ -315,5 +321,13 @@ export class BurningWheel {
   setBaseScale(scale = 1) {
     this.baseScale = scale;
     this.group.scale.setScalar(scale);
+  }
+
+  setExpression(name, holdSeconds = 1.8, elapsed = 0) {
+    this.eye?.setExpression(name, holdSeconds, elapsed);
+  }
+
+  blink(elapsed = 0) {
+    this.eye?.blinkNow(elapsed);
   }
 }
