@@ -1,9 +1,13 @@
 import * as THREE from "three";
 import { BurningWheel } from "./character/BurningWheel.js";
+import { ContainmentEngine } from "./character/ContainmentEngine.js";
 import "./style.css";
 
 const stage = document.querySelector("#stage");
 const motionToggle = document.querySelector("#motion-toggle");
+const autoChaosToggle = document.querySelector("#auto-chaos");
+const realityReset = document.querySelector("#reality-reset");
+const statusLine = document.querySelector(".hud__label span");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#168cff");
@@ -62,33 +66,11 @@ const cloudLow = makePixelCloud(0.45);
 cloudLow.position.set(-2.75, -2.10, -4);
 world.add(cloudLow);
 
+const clouds = [cloudBackLeft, cloudBackRight, cloudLow];
+
 const angel = new BurningWheel();
 angel.setBaseScale(0.94);
 world.add(angel.group);
-
-const EXPRESSION_KEYS = {
-  Digit1: "neutral",
-  Digit2: "smug",
-  Digit3: "suspicious",
-  Digit4: "wide",
-  Digit5: "offended",
-  Digit6: "delighted",
-  Digit7: "deadpan",
-  Digit8: "sideEye",
-  Digit9: "eyeRoll",
-  Digit0: "wtf",
-};
-
-document.querySelectorAll("[data-expression]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const expression = button.dataset.expression;
-    angel.setExpression(expression, expression === "neutral" ? 0 : 2.4, elapsed);
-
-    document.querySelectorAll("[data-expression]").forEach((item) => {
-      item.classList.toggle("is-active", item === button);
-    });
-  });
-});
 
 const hoverShadow = new THREE.Mesh(
   new THREE.RingGeometry(0.72, 1.62, 32),
@@ -103,10 +85,70 @@ hoverShadow.position.set(0, -2.28, -2.5);
 hoverShadow.scale.y = 0.31;
 world.add(hoverShadow);
 
+const containment = new ContainmentEngine({
+  angel,
+  scene,
+  renderer,
+  stage,
+  clouds,
+  statusLine,
+  motionButton: motionToggle,
+  resetButton: realityReset,
+});
+
+const EXPRESSION_KEYS = {
+  Digit1: "neutral",
+  Digit2: "smug",
+  Digit3: "suspicious",
+  Digit4: "wide",
+  Digit5: "offended",
+  Digit6: "delighted",
+  Digit7: "deadpan",
+  Digit8: "sideEye",
+  Digit9: "eyeRoll",
+  Digit0: "wtf",
+};
+
+const GESTURE_KEYS = {
+  KeyQ: "leanIn",
+  KeyW: "recoil",
+  KeyE: "judgment",
+  KeyR: "flare",
+  KeyT: "attractorDrift",
+  KeyY: "orientationSlip",
+  KeyU: "mobiusFlip",
+  KeyI: "projectionError",
+  KeyO: "dimensionStutter",
+};
+
 const pointer = new THREE.Vector2(0, 0);
 let motionEnabled = true;
 let elapsed = 0;
 let previousTime = performance.now();
+
+document.querySelectorAll("[data-expression]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const expression = button.dataset.expression;
+    angel.setExpression(
+      expression,
+      expression === "neutral" ? 0 : 2.4,
+      elapsed
+    );
+
+    document.querySelectorAll("[data-expression]").forEach((item) => {
+      item.classList.toggle("is-active", item === button);
+    });
+  });
+});
+
+document.querySelectorAll("[data-gesture]").forEach((button) => {
+  button.addEventListener("click", () => {
+    containment.trigger(button.dataset.gesture, {
+      intensity: Number(button.dataset.intensity || 1),
+      elapsed,
+    });
+  });
+});
 
 function updatePointer(clientX, clientY) {
   pointer.x = (clientX / window.innerWidth) * 2 - 1;
@@ -125,11 +167,29 @@ function toggleMotion() {
   motionEnabled = !motionEnabled;
   motionToggle.setAttribute("aria-pressed", String(!motionEnabled));
   motionToggle.textContent = motionEnabled ? "PAUSE MOTION" : "RESUME MOTION";
+  containment.originalMotionText = motionToggle.textContent;
 }
 
 motionToggle.addEventListener("click", toggleMotion);
 
+autoChaosToggle?.addEventListener("click", () => {
+  containment.setAutoChaos(!containment.autoChaos);
+  autoChaosToggle.setAttribute("aria-pressed", String(containment.autoChaos));
+  autoChaosToggle.textContent = containment.autoChaos
+    ? "AUTO CHAOS: ON"
+    : "AUTO CHAOS: OFF";
+});
+
+realityReset?.addEventListener("click", () => {
+  containment.reset();
+});
+
 window.addEventListener("keydown", (event) => {
+  if (event.code === "Escape") {
+    containment.reset();
+    return;
+  }
+
   if (event.code === "Space" && event.target === document.body) {
     event.preventDefault();
     toggleMotion();
@@ -141,9 +201,19 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
+  const gesture = GESTURE_KEYS[event.code];
+  if (gesture) {
+    containment.trigger(gesture, { elapsed });
+    return;
+  }
+
   const expression = EXPRESSION_KEYS[event.code];
   if (expression) {
-    angel.setExpression(expression, expression === "neutral" ? 0 : 2.4, elapsed);
+    angel.setExpression(
+      expression,
+      expression === "neutral" ? 0 : 2.4,
+      elapsed
+    );
   }
 });
 
@@ -159,15 +229,29 @@ function resize() {
   camera.updateProjectionMatrix();
 
   const divisor = window.innerWidth < 700 ? 3.2 : 4.2;
-  const renderWidth = Math.max(150, Math.round(window.innerWidth / divisor));
-  const renderHeight = Math.max(150, Math.round(window.innerHeight / divisor));
+  const renderWidth = Math.max(
+    150,
+    Math.round(window.innerWidth / divisor)
+  );
+  const renderHeight = Math.max(
+    150,
+    Math.round(window.innerHeight / divisor)
+  );
 
   renderer.setSize(renderWidth, renderHeight, false);
+  containment.resizeOverlay();
 
   const cloudSpread = Math.min(halfWidth * 0.82, 4.2);
   cloudBackLeft.position.x = -cloudSpread;
   cloudBackRight.position.x = cloudSpread;
   cloudLow.position.x = -cloudSpread * 0.9;
+
+  containment.cloudBases = clouds.map((cloud) => ({
+    cloud,
+    position: cloud.position.clone(),
+    scale: cloud.scale.clone(),
+    rotation: cloud.rotation.clone(),
+  }));
 
   const characterScale = window.innerWidth < 520 ? 0.82 : 0.94;
   angel.setBaseScale(characterScale);
@@ -184,13 +268,23 @@ function animate(now) {
 
   if (motionEnabled) {
     elapsed += delta;
-    angel.update(delta, elapsed, pointer);
 
-    hoverShadow.scale.x = 1 + Math.sin(elapsed * 1.16) * 0.055;
-    hoverShadow.material.opacity = 0.39 - Math.sin(elapsed * 1.16) * 0.045;
+    angel.update(delta, elapsed, pointer);
+    containment.update(delta, elapsed, pointer);
+
+    hoverShadow.scale.x =
+      1 +
+      Math.sin(elapsed * 1.16) * 0.055 +
+      containment.breachLevel * 0.1;
+
+    hoverShadow.material.opacity =
+      0.39 -
+      Math.sin(elapsed * 1.16) * 0.045 -
+      containment.breachLevel * 0.14;
   }
 
   renderer.render(scene, camera);
+  containment.afterRender(elapsed);
 }
 
 requestAnimationFrame(animate);
