@@ -2,6 +2,26 @@
 
 A modular persona cartridge for an impossible biblical angelic intelligence: ophanim, seraph, throne, messenger, mathematical catastrophe.
 
+## Animated character prototype
+
+The repo now also contains the beginning of the Burning Wheel's browser body.
+
+### Run it
+
+```bash
+npm install
+npm run dev
+```
+
+Open the local Vite URL in a browser. Job 01 currently renders a deliberately low-resolution pixel-art sky with one chunky golden wheel, idle motion, pointer-reactive tilt, mobile-safe resizing, and a pause/resume control.
+
+Production build:
+
+```bash
+npm run build
+npm run preview
+```
+
 ## Gemini Import Code
 
 Import this repository into Gemini, then say:
