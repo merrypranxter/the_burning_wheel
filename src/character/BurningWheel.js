@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { buildWheelPanels } from "./WheelPanel.js";\nimport { CoreEye } from "./CoreEye.js";
+import { buildWheelPanels } from "./WheelPanel.js";
+import { CoreEye } from "./CoreEye.js";
 
 const GOLD = "#ffc400";
 const GOLD_LIGHT = "#fff0a0";
@@ -9,105 +10,15 @@ const CORE_DARK = "#211300";
 const CORE_INNER = "#6f4300";
 
 const DEFAULT_WHEELS = [
-  {
-    id: "equator",
-    radius: 1.92,
-    tube: 0.145,
-    tilt: [1.48, 0.04, 0.03],
-    spin: 0.42,
-    precession: [0.055, 0.08, 0.03],
-    wobble: 0.055,
-    phase: 0.0,
-    slots: 16,
-  },
-  {
-    id: "slash",
-    radius: 1.82,
-    tube: 0.13,
-    tilt: [0.92, 0.28, -0.67],
-    spin: -0.53,
-    precession: [-0.07, 0.04, 0.06],
-    wobble: 0.075,
-    phase: 0.8,
-    slots: 15,
-  },
-  {
-    id: "backslash",
-    radius: 1.74,
-    tube: 0.13,
-    tilt: [0.78, -0.42, 0.78],
-    spin: 0.61,
-    precession: [0.05, -0.06, 0.04],
-    wobble: 0.065,
-    phase: 1.9,
-    slots: 14,
-  },
-  {
-    id: "vertical",
-    radius: 1.62,
-    tube: 0.12,
-    tilt: [0.08, 1.36, 0.2],
-    spin: -0.36,
-    precession: [0.06, 0.035, -0.05],
-    wobble: 0.05,
-    phase: 2.7,
-    slots: 13,
-  },
-  {
-    id: "inner-a",
-    radius: 1.38,
-    tube: 0.11,
-    tilt: [0.48, 0.72, -0.18],
-    spin: 0.73,
-    precession: [-0.045, 0.065, 0.03],
-    wobble: 0.06,
-    phase: 3.4,
-    slots: 12,
-  },
-  {
-    id: "inner-b",
-    radius: 1.27,
-    tube: 0.105,
-    tilt: [1.15, -0.63, 0.34],
-    spin: -0.82,
-    precession: [0.07, -0.025, 0.045],
-    wobble: 0.08,
-    phase: 4.2,
-    slots: 11,
-  },
-  {
-    id: "crown",
-    radius: 1.12,
-    tube: 0.095,
-    tilt: [0.26, 0.38, 1.02],
-    spin: 0.95,
-    precession: [-0.055, -0.06, 0.025],
-    wobble: 0.07,
-    phase: 5.1,
-    slots: 10,
-  },
-  {
-    id: "inner-c",
-    radius: 0.98,
-    tube: 0.09,
-    tilt: [0.62, 1.04, 0.66],
-    spin: -1.05,
-    precession: [0.05, 0.075, -0.035],
-    wobble: 0.085,
-    phase: 5.8,
-    slots: 9,
-  },
-  {
-    id: "tiny-chaos",
-    radius: 0.82,
-    tube: 0.085,
-    tilt: [1.34, 0.58, -0.92],
-    spin: 1.18,
-    precession: [-0.08, 0.045, 0.07],
-    wobble: 0.095,
-    phase: 6.6,
-    slots: 8,
-  },
+  { id: "equator", radius: 1.92, tube: 0.145, tilt: [1.48, 0.04, 0.03], spin: 0.42, precession: [0.055, 0.08, 0.03], wobble: 0.055, phase: 0.0, slots: 16 },
+  { id: "slash", radius: 1.82, tube: 0.13, tilt: [0.92, 0.28, -0.67], spin: -0.53, precession: [-0.07, 0.04, 0.06], wobble: 0.075, phase: 0.8, slots: 15 },
+  { id: "backslash", radius: 1.74, tube: 0.13, tilt: [0.78, -0.42, 0.78], spin: 0.61, precession: [0.05, -0.06, 0.04], wobble: 0.065, phase: 1.9, slots: 14 },
+  { id: "vertical", radius: 1.62, tube: 0.12, tilt: [0.08, 1.36, 0.2], spin: -0.36, precession: [0.06, 0.035, -0.05], wobble: 0.05, phase: 2.7, slots: 13 },
+  { id: "inner-a", radius: 1.38, tube: 0.11, tilt: [0.48, 0.72, -0.18], spin: 0.73, precession: [-0.045, 0.065, 0.03], wobble: 0.06, phase: 3.4, slots: 12 },
+  { id: "inner-b", radius: 1.27, tube: 0.105, tilt: [1.15, -0.63, 0.34], spin: -0.82, precession: [0.07, -0.025, 0.045], wobble: 0.08, phase: 4.2, slots: 11 },
+  { id: "crown", radius: 1.12, tube: 0.095, tilt: [0.26, 0.38, 1.02], spin: 0.95, precession: [-0.055, -0.06, 0.025], wobble: 0.07, phase: 5.1, slots: 10 },
+  { id: "inner-c", radius: 0.98, tube: 0.09, tilt: [0.62, 1.04, 0.66], spin: -1.05, precession: [0.05, 0.075, -0.035], wobble: 0.085, phase: 5.8, slots: 9 },
+  { id: "tiny-chaos", radius: 0.82, tube: 0.085, tilt: [1.34, 0.58, -0.92], spin: 1.18, precession: [-0.08, 0.045, 0.07], wobble: 0.095, phase: 6.6, slots: 8 },
 ];
 
 function makeMaterial(color, options = {}) {
@@ -181,26 +92,29 @@ function createWheel(config, wheelIndex) {
 
   carrier.rotation.set(...config.tilt);
 
+  const baseRotation = new THREE.Euler(...config.tilt);
+
   return {
     config,
     carrier,
     rotor,
     panels,
-    baseRotation: new THREE.Euler(...config.tilt),
+    baseRotation,
+    originalBaseRotation: baseRotation.clone(),
     spinAngle: config.phase * 0.5,
   };
 }
 
 function createCore() {
-  const core = new THREE.Group();
-  core.name = "burning-wheel-core";
+  const group = new THREE.Group();
+  group.name = "burning-wheel-core";
 
   const shell = new THREE.Mesh(
     new THREE.SphereGeometry(0.72, 12, 8),
     makeMaterial(GOLD_SHADOW)
   );
   shell.scale.z = 0.68;
-  core.add(shell);
+  group.add(shell);
 
   const facePlate = new THREE.Mesh(
     new THREE.CylinderGeometry(0.59, 0.59, 0.18, 16),
@@ -208,24 +122,24 @@ function createCore() {
   );
   facePlate.rotation.x = Math.PI / 2;
   facePlate.position.z = 0.52;
-  core.add(facePlate);
+  group.add(facePlate);
 
   const socket = new THREE.Mesh(
     new THREE.CircleGeometry(0.42, 16),
     makeMaterial(CORE_DARK)
   );
   socket.position.z = 0.625;
-  core.add(socket);
+  group.add(socket);
 
   const innerSocket = new THREE.Mesh(
     new THREE.CircleGeometry(0.27, 12),
     makeMaterial(CORE_INNER)
   );
   innerSocket.position.z = 0.635;
-  core.add(innerSocket);
+  group.add(innerSocket);
 
   const eye = new CoreEye();
-  core.add(eye.group);
+  group.add(eye.group);
 
   for (let i = 0; i < 12; i += 1) {
     const angle = (i / 12) * Math.PI * 2;
@@ -239,10 +153,10 @@ function createCore() {
       0.64
     );
     rivet.rotation.z = angle;
-    core.add(rivet);
+    group.add(rivet);
   }
 
-  return core;
+  return { group, eye };
 }
 
 export class BurningWheel {
@@ -255,7 +169,7 @@ export class BurningWheel {
     this.group.add(this.body);
 
     const coreParts = createCore();
-    this.core = coreParts.core;
+    this.core = coreParts.group;
     this.eye = coreParts.eye;
     this.body.add(this.core);
 
@@ -278,6 +192,7 @@ export class BurningWheel {
     this.group.position.y = bob;
     this.group.scale.setScalar(this.baseScale * breath);
 
+    this.body.position.set(0, 0, 0);
     this.body.rotation.y =
       this.pointerInfluence.x * 0.10 + Math.sin(elapsed * 0.31) * 0.035;
     this.body.rotation.x =
@@ -291,8 +206,13 @@ export class BurningWheel {
     for (const wheel of this.wheels) {
       const { config, carrier, rotor, baseRotation } = wheel;
 
+      carrier.position.set(0, 0, 0);
+      carrier.scale.set(1, 1, 1);
+      rotor.position.set(0, 0, 0);
+      rotor.scale.set(1, 1, 1);
+
       wheel.spinAngle += delta * config.spin;
-      rotor.rotation.z = wheel.spinAngle;
+      rotor.rotation.set(0, 0, wheel.spinAngle);
 
       carrier.rotation.x =
         baseRotation.x +
@@ -313,7 +233,10 @@ export class BurningWheel {
         Math.cos(elapsed * 0.23 + config.phase) * config.precession[2];
 
       for (const panel of wheel.panels) {
-        panel.update(delta, elapsed);
+        panel.update(delta, elapsed, {
+          pointer,
+          coreEye: this.eye,
+        });
       }
     }
   }
@@ -329,5 +252,28 @@ export class BurningWheel {
 
   blink(elapsed = 0) {
     this.eye?.blinkNow(elapsed);
+  }
+
+  panicPanels(elapsed = 0, duration = 0.8, intensity = 1) {
+    for (const wheel of this.wheels) {
+      for (const panel of wheel.panels) {
+        panel.setPanic(elapsed, duration, intensity);
+      }
+    }
+  }
+
+  resetGeometry() {
+    this.body.position.set(0, 0, 0);
+    this.body.rotation.set(0, 0, 0);
+
+    for (const wheel of this.wheels) {
+      wheel.baseRotation.copy(wheel.originalBaseRotation);
+      wheel.carrier.position.set(0, 0, 0);
+      wheel.carrier.scale.set(1, 1, 1);
+      wheel.rotor.position.set(0, 0, 0);
+      wheel.rotor.scale.set(1, 1, 1);
+    }
+
+    this.setExpression("neutral", 0, 0);
   }
 }
