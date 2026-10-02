@@ -276,6 +276,10 @@ export class BurningWheel {
     this.eye?.setExpression(name, holdSeconds, elapsed);
   }
 
+  setEyeForegroundPriority(enabled, reason = "manual") {
+    this.eye?.setForegroundPriority(enabled, reason);
+  }
+
   blink(elapsed = 0) {
     this.eye?.blinkNow(elapsed);
   }
