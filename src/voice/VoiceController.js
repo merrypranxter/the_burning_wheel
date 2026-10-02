@@ -31,6 +31,7 @@ export class VoiceController {
     this.previousEnergy = 0;
     this.lastGestureAt = -Infinity;
     this.requestToken = 0;
+    this.playbackResolvers = new Set();
 
     this.audio.addEventListener("play", () => this.onState("speaking"));
     this.audio.addEventListener("ended", () => this.finishPlayback());
@@ -109,6 +110,7 @@ export class VoiceController {
   stop({ invalidate = true } = {}) {
     if (invalidate) this.requestToken += 1;
 
+    this.resolvePlayback("stopped");
     this.audio.pause();
     this.audio.removeAttribute("src");
     this.audio.load();
@@ -122,6 +124,7 @@ export class VoiceController {
   }
 
   finishPlayback() {
+    this.resolvePlayback("ended");
     this.energy.rms = 0;
     this.energy.low = 0;
     this.energy.high = 0;
@@ -134,6 +137,25 @@ export class VoiceController {
     if (!this.currentUrl) return;
     URL.revokeObjectURL(this.currentUrl);
     this.currentUrl = null;
+  }
+
+  resolvePlayback(reason = "ended") {
+    for (const resolve of this.playbackResolvers) {
+      resolve({ reason, cancelled: reason !== "ended" });
+    }
+    this.playbackResolvers.clear();
+  }
+
+  async speakAndWait(text) {
+    await this.speak(text);
+
+    if (this.audio.ended || this.audio.paused) {
+      return { reason: "stopped", cancelled: true };
+    }
+
+    return new Promise((resolve) => {
+      this.playbackResolvers.add(resolve);
+    });
   }
 
   update(_delta, elapsed) {
