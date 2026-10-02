@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#168cff" />
     <title>The Burning Wheel</title>
   </head>
@@ -10,27 +13,56 @@
     <main id="app" aria-label="The Burning Wheel character stage">
       <div id="stage" aria-hidden="true"></div>
 
+      <button id="reality-reset" type="button" title="Emergency reset (Esc)">
+        RESET REALITY
+      </button>
+
       <section class="hud" aria-label="Prototype controls">
         <div class="hud__label">
           <strong>THE BURNING WHEEL</strong>
-          <span>JOB 04 // BIG FUCKING EYE // TAP A MOOD</span>
+          <span>JOB 05 // CONTAINMENT APPARENTLY OPTIONAL</span>
         </div>
+
         <div class="hud__actions">
-          <div class="expressions" aria-label="Eye expression tester">
-            <button class="is-active" type="button" data-expression="neutral">NEUTRAL</button>
-            <button type="button" data-expression="smug">SMUG</button>
-            <button type="button" data-expression="suspicious">SUS</button>
-            <button type="button" data-expression="wide">WIDE</button>
-            <button type="button" data-expression="offended">OFFENDED</button>
-            <button type="button" data-expression="delighted">DELIGHT</button>
-            <button type="button" data-expression="deadpan">DEADPAN</button>
-            <button type="button" data-expression="sideEye">SIDE-EYE</button>
-            <button type="button" data-expression="eyeRoll">EYE ROLL</button>
-            <button type="button" data-expression="wtf">WTF</button>
+          <div class="control-bank">
+            <div class="control-bank__name">EYE</div>
+            <div class="expressions control-scroll" aria-label="Eye expression tester">
+              <button class="is-active" type="button" data-expression="neutral">NEUTRAL</button>
+              <button type="button" data-expression="smug">SMUG</button>
+              <button type="button" data-expression="suspicious">SUS</button>
+              <button type="button" data-expression="wide">WIDE</button>
+              <button type="button" data-expression="offended">OFFENDED</button>
+              <button type="button" data-expression="delighted">DELIGHT</button>
+              <button type="button" data-expression="deadpan">DEADPAN</button>
+              <button type="button" data-expression="sideEye">SIDE-EYE</button>
+              <button type="button" data-expression="eyeRoll">EYE ROLL</button>
+              <button type="button" data-expression="wtf">WTF</button>
+            </div>
           </div>
-          <button id="motion-toggle" type="button" aria-pressed="false">
-            PAUSE MOTION
-          </button>
+
+          <div class="control-bank">
+            <div class="control-bank__name">VERBS</div>
+            <div class="gestures control-scroll" aria-label="Containment gesture tester">
+              <button type="button" data-gesture="leanIn">LEAN</button>
+              <button type="button" data-gesture="recoil">RECOIL</button>
+              <button type="button" data-gesture="judgment">JUDGMENT</button>
+              <button type="button" data-gesture="flare">FLARE</button>
+              <button type="button" data-gesture="attractorDrift">ATTRACTOR</button>
+              <button type="button" data-gesture="orientationSlip">ORIENTATION SLIP</button>
+              <button type="button" data-gesture="mobiusFlip">MÖBIUS FLIP</button>
+              <button type="button" data-gesture="projectionError">PROJECTION ERROR</button>
+              <button type="button" data-gesture="dimensionStutter">DIMENSION STUTTER</button>
+            </div>
+          </div>
+
+          <div class="system-controls">
+            <button id="auto-chaos" type="button" aria-pressed="true">
+              AUTO CHAOS: ON
+            </button>
+            <button id="motion-toggle" type="button" aria-pressed="false">
+              PAUSE MOTION
+            </button>
+          </div>
         </div>
       </section>
     </main>
