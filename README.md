@@ -56,6 +56,8 @@ Supported commands:
 
 The on-screen SKIT editor includes a working sample. **PERFORM** runs it; **STOP SKIT** cancels current speech/timing without nuking the whole page. Cmd/Ctrl+Enter also runs the current skit.
 
+The first full authored performance lives at `skits/the-word-god-is-not-god.bwskit`. **LOAD GNOSIS RANT** drops that full monologue/choreography into the editor so it can be performed or edited without copy/paste.
+
 Example:
 
 ```text
