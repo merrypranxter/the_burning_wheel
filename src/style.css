@@ -92,6 +92,7 @@ body {
 
 .expressions button,
 #motion-toggle {
+  pointer-events: auto;
   appearance: none;
   border: 3px solid #120c00;
   border-radius: 0;
