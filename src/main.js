@@ -157,8 +157,16 @@ const performanceEngine = new PerformanceEngine({
     }
   },
   onStep(step, index) {
-    if (!skitScript) return;
-    skitScript.dataset.activeLine = String(step.lineNumber || index + 1);
+    if (skitScript) {
+      skitScript.dataset.activeLine = String(step.lineNumber || index + 1);
+    }
+
+    if (step.type === "autoChaos" && autoChaosToggle) {
+      autoChaosToggle.setAttribute("aria-pressed", String(step.enabled));
+      autoChaosToggle.textContent = step.enabled
+        ? "AUTO CHAOS: ON"
+        : "AUTO CHAOS: OFF";
+    }
   },
 });
 
