@@ -20,7 +20,7 @@
       <section class="hud" aria-label="Prototype controls">
         <div class="hud__label">
           <strong>THE BURNING WHEEL</strong>
-          <span>JOB 05 // CONTAINMENT APPARENTLY OPTIONAL</span>
+          <span>JOB 06 // THE TERRARIUM HAS A LARYNX</span>
         </div>
 
         <div class="hud__actions">
@@ -52,6 +52,23 @@
               <button type="button" data-gesture="mobiusFlip">MÖBIUS FLIP</button>
               <button type="button" data-gesture="projectionError">PROJECTION ERROR</button>
               <button type="button" data-gesture="dimensionStutter">DIMENSION STUTTER</button>
+            </div>
+          </div>
+
+          <div class="control-bank control-bank--voice">
+            <div class="control-bank__name">VOICE</div>
+            <div class="voice-console">
+              <textarea
+                id="voice-text"
+                rows="1"
+                maxlength="1200"
+                spellcheck="true"
+                aria-label="Words for The Burning Wheel to speak"
+                placeholder="Give the wheel a sentence..."
+              >BE NOT AFRAID. I said what I said.</textarea>
+              <button id="voice-speak" type="button">SPEAK</button>
+              <button id="voice-stop" type="button">STOP</button>
+              <span id="voice-status" role="status" aria-live="polite">THROAT IDLE</span>
             </div>
           </div>
 
