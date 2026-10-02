@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open the local Vite URL in a browser. Job 02 now renders the character skeleton: nine independently moving golden wheels around a central core, each with its own axis, spin direction, speed, wobble, phase, and precession. The whole creature idles, floats, and reacts subtly to pointer movement while keeping the deliberately low-resolution pixel-art browser-toy look.
+Open the local Vite URL in a browser. Job 03 now adds the eye/LED circus. Every golden wheel carries its own animated display panels: collage-style human eyes, LED eyes, pixel faces, hearts, crowns, arrows, stars, question marks, marquee sequences, and glitch tiles. The panels have independent blink/look timers, independent display animation, and a slow independent crawl around their own wheel track while the wheel itself continues spinning.
 
 Production build:
 
