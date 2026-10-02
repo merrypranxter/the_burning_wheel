@@ -55,7 +55,7 @@ Set these environment variables on the Netlify project:
 - `ELEVENLABS_VOICE_ID` — the saved Burning Wheel voice ID
 - `ELEVENLABS_MODEL_ID` — optional; defaults to `eleven_v4`
 
-For local development, copy `.env.example` to `.env` and fill in your own values. Real `.env` files are gitignored.
+For local voice testing, copy `.env.example` to `.env`, fill in your own values, and run the site through `netlify dev` so the `/speak` function is available. Real `.env` files are gitignored.
 
 The `/speak` function is POST-only, caps a single utterance at 1200 characters, and applies a per-IP/domain rate limit so a public prototype cannot casually vaporize the ElevenLabs credit balance.
 
