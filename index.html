@@ -17,13 +17,24 @@
         RESET REALITY
       </button>
 
-      <section class="hud" aria-label="Prototype controls">
-        <div class="hud__label">
-          <strong>THE BURNING WHEEL</strong>
-          <span>JOB 07 // LITTLE SKIT MACHINE</span>
+      <section class="hud is-collapsed" id="control-lab" aria-label="Prototype controls">
+        <div class="hud__chrome">
+          <div class="hud__label">
+            <strong>THE BURNING WHEEL</strong>
+            <span>JOB 07 // LITTLE SKIT MACHINE</span>
+          </div>
+          <button
+            id="hud-toggle"
+            class="hud__toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="hud-actions"
+          >
+            OPEN LAB
+          </button>
         </div>
 
-        <div class="hud__actions">
+        <div class="hud__actions" id="hud-actions">
           <div class="control-bank">
             <div class="control-bank__name">EYE</div>
             <div class="expressions control-scroll" aria-label="Eye expression tester">
