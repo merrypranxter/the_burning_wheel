@@ -224,11 +224,19 @@ export class PerformanceEngine {
         const result = await this.executeStep(step, token);
 
         if (result?.cancelled || token !== this.runToken) {
+          this.running = false;
+          this.currentStep = -1;
+          this.onState("idle", "cancelled");
           return { cancelled: true };
         }
       }
 
-      if (token !== this.runToken) return { cancelled: true };
+      if (token !== this.runToken) {
+        this.running = false;
+        this.currentStep = -1;
+        this.onState("idle", "cancelled");
+        return { cancelled: true };
+      }
 
       this.running = false;
       this.currentStep = -1;
