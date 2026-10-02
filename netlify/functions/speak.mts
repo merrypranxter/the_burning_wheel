@@ -1,5 +1,3 @@
-import type { Config, Context } from "@netlify/functions";
-
 declare const Netlify: {
   env: {
     get(key: string): string | undefined;
@@ -12,7 +10,7 @@ function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
 }
 
-export default async function speak(request: Request, _context: Context) {
+export default async function speak(request: Request) {
   let payload: { text?: unknown };
 
   try {
@@ -88,7 +86,7 @@ export default async function speak(request: Request, _context: Context) {
   });
 }
 
-export const config: Config = {
+export const config = {
   path: "/speak",
   method: "POST",
   rateLimit: {
