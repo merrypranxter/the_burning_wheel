@@ -21,7 +21,7 @@
         <div class="hud__chrome">
           <div class="hud__label">
             <strong>THE BURNING WHEEL</strong>
-            <span>JOB 07 // LITTLE SKIT MACHINE</span>
+            <span>JOB 08 // AUTO-DIRECTOR ONLINE</span>
           </div>
           <button
             id="hud-toggle"
@@ -80,6 +80,34 @@
               <button id="voice-speak" type="button">SPEAK</button>
               <button id="voice-stop" type="button">STOP</button>
               <span id="voice-status" role="status" aria-live="polite">THROAT IDLE</span>
+              <label class="voice-speed">
+                <span>SPEED</span>
+                <input
+                  id="voice-speed"
+                  type="range"
+                  min="0.80"
+                  max="1.50"
+                  step="0.05"
+                  value="1.30"
+                  aria-label="Voice playback speed"
+                />
+                <output id="voice-speed-value" for="voice-speed">1.30×</output>
+              </label>
+            </div>
+          </div>
+
+          <div class="control-bank control-bank--director">
+            <div class="control-bank__name">DIRECT</div>
+            <div class="director-console">
+              <textarea
+                id="director-text"
+                rows="5"
+                spellcheck="true"
+                aria-label="Raw dialogue to automatically choreograph"
+                placeholder="Paste raw Burning Wheel dialogue here. He will turn it into eye acting, gestures, beats, and SAY lines."
+              ></textarea>
+              <button id="director-build" type="button">DIRECT THIS</button>
+              <span id="director-status" role="status" aria-live="polite">DIRECTOR IDLE</span>
             </div>
           </div>
 
