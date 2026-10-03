@@ -21,7 +21,7 @@
         <div class="hud__chrome">
           <div class="hud__label">
             <strong>THE BURNING WHEEL</strong>
-            <span>JOB 09 // BRAIN BRIDGE ONLINE</span>
+            <span>JOB 10 // RANT CHURNER ONLINE</span>
           </div>
           <button
             id="hud-toggle"
@@ -115,6 +115,33 @@
               </select>
               <button id="brain-generate" type="button">THINK + DIRECT</button>
               <span id="brain-status" role="status" aria-live="polite">BRAIN IDLE</span>
+            </div>
+          </div>
+
+          <div class="control-bank control-bank--rant">
+            <div class="control-bank__name">RANTS</div>
+            <div class="rant-console">
+              <textarea
+                id="rant-bank"
+                rows="7"
+                spellcheck="true"
+                aria-label="Notebook rant seed bank"
+                placeholder="Paste a Gemini Notebook report here. Separate full seed packets with --- . You can also use // or one seed per line."
+              ></textarea>
+              <div class="rant-buttons">
+                <button id="rant-save" type="button">SAVE BANK</button>
+                <button id="rant-churn" type="button">CHURN ONE</button>
+                <button id="rant-think" type="button">CHURN + THINK</button>
+                <button id="rant-reset" type="button">RESET HISTORY</button>
+              </div>
+              <textarea
+                id="rant-current"
+                rows="4"
+                readonly
+                aria-label="Current churned rant seed"
+                placeholder="Current seed packet appears here."
+              ></textarea>
+              <span id="rant-status" role="status" aria-live="polite">CHURNER IDLE</span>
             </div>
           </div>
 
