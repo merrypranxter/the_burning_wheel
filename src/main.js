@@ -25,6 +25,7 @@ const voiceStop = document.querySelector("#voice-stop");
 const voiceStatus = document.querySelector("#voice-status");
 const voiceSpeed = document.querySelector("#voice-speed");
 const voiceSpeedValue = document.querySelector("#voice-speed-value");
+const voiceApertureToggle = document.querySelector("#voice-aperture-toggle");
 
 const skitScript = document.querySelector("#skit-script");
 const skitRun = document.querySelector("#skit-run");
@@ -273,6 +274,18 @@ voiceSpeed?.addEventListener("input", () => {
   if (voiceSpeedValue) {
     voiceSpeedValue.textContent = `${rate.toFixed(2)}×`;
   }
+});
+
+voiceApertureToggle?.addEventListener("click", () => {
+  const enabled =
+    voiceApertureToggle.getAttribute("aria-pressed") !== "true";
+
+  voiceApertureToggle.setAttribute("aria-pressed", String(enabled));
+  voiceApertureToggle.textContent = enabled
+    ? "VOICE APERTURE: ON"
+    : "VOICE APERTURE: OFF";
+
+  angel.setVoiceApertureEnabled(enabled);
 });
 
 brainGenerate?.addEventListener("click", async () => {
