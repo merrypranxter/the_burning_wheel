@@ -11,6 +11,47 @@ function averageRange(array, start, end) {
   return total / (to - from) / 255;
 }
 
+function normalizeContinuousSpeech(value) {
+  return String(value || "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[\t ]+/g, " ")
+    .replace(/ *\n+ */g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function splitContinuousSpeech(value, maxLength = 1100) {
+  const text = normalizeContinuousSpeech(value);
+  if (!text) return [];
+  if (text.length <= maxLength) return [text];
+
+  const pieces = [];
+  let remaining = text;
+
+  while (remaining.length > maxLength) {
+    let cut = -1;
+
+    for (const token of [". ", "? ", "! ", "; ", ", "]) {
+      const candidate = remaining.lastIndexOf(token, maxLength);
+      if (candidate > cut) cut = candidate + token.length - 1;
+    }
+
+    if (cut < Math.round(maxLength * 0.58)) {
+      cut = remaining.lastIndexOf(" ", maxLength);
+    }
+
+    if (cut < Math.round(maxLength * 0.45)) {
+      cut = maxLength;
+    }
+
+    pieces.push(remaining.slice(0, cut).trim());
+    remaining = remaining.slice(cut).trim();
+  }
+
+  if (remaining) pieces.push(remaining);
+  return pieces.filter(Boolean);
+}
+
 export class VoiceController {
   constructor({ angel, containment, onState = () => {}, playbackRate = 1.3 }) {
     this.angel = angel;
@@ -43,12 +84,17 @@ export class VoiceController {
     this.gestureIndex = 0;
     this.requestToken = 0;
     this.playbackResolvers = new Set();
+    this.continuousQueueActive = false;
 
     this.audio.addEventListener("play", () => {
       this.angel?.setSpeaking(true);
       this.onState("speaking");
     });
-    this.audio.addEventListener("ended", () => this.finishPlayback());
+    this.audio.addEventListener("ended", () => {
+      if (!this.continuousQueueActive) {
+        this.finishPlayback();
+      }
+    });
     this.audio.addEventListener("pause", () => {
       this.angel?.setSpeaking(false);
       if (!this.audio.ended && this.audio.currentTime > 0) {
@@ -82,6 +128,112 @@ export class VoiceController {
     this.playbackRate = Math.max(0.6, Math.min(1.8, Number(rate) || 1));
     this.audio.playbackRate = this.playbackRate;
     this.audio.defaultPlaybackRate = this.playbackRate;
+  }
+
+  async fetchSpeechBlob(text, token) {
+    const response = await fetch("/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+
+    if (token !== this.requestToken) {
+      return null;
+    }
+
+    if (!response.ok) {
+      let message = `Voice request failed (HTTP ${response.status}).`;
+      try {
+        const payload = await response.json();
+        if (payload?.error) message = payload.error;
+      } catch {
+        // Keep the generic error if the response was not JSON.
+      }
+
+      throw new Error(message);
+    }
+
+    return response.blob();
+  }
+
+  async playPreparedBlob(blob, token) {
+    if (!blob || token !== this.requestToken) {
+      return { cancelled: true };
+    }
+
+    this.revokeCurrentUrl();
+    this.currentUrl = URL.createObjectURL(blob);
+    this.audio.src = this.currentUrl;
+    this.audio.currentTime = 0;
+    this.audio.playbackRate = this.playbackRate;
+
+    const ended = new Promise((resolve) => {
+      const onEnded = () => {
+        this.audio.removeEventListener("ended", onEnded);
+        resolve({ cancelled: token !== this.requestToken });
+      };
+
+      this.audio.addEventListener("ended", onEnded, { once: true });
+    });
+
+    await this.audio.play();
+    return ended;
+  }
+
+  async speakContinuousAndWait(text) {
+    const chunks = splitContinuousSpeech(text);
+
+    if (!chunks.length) {
+      throw new Error("Give him something to say first.");
+    }
+
+    const token = ++this.requestToken;
+    this.stop({ invalidate: false });
+    this.continuousQueueActive = true;
+    this.onState("summoning");
+
+    try {
+      // Generate every hidden TTS chunk up front. That moves any network wait
+      // to the beginning so paragraph boundaries do not create dead air later.
+      const blobs = await Promise.all(
+        chunks.map((chunk) => this.fetchSpeechBlob(chunk, token))
+      );
+
+      if (token !== this.requestToken) {
+        return { reason: "stopped", cancelled: true };
+      }
+
+      await this.ensureAudioGraph();
+      if (this.context.state === "suspended") {
+        await this.context.resume();
+      }
+
+      for (const blob of blobs) {
+        if (token !== this.requestToken) {
+          return { reason: "stopped", cancelled: true };
+        }
+
+        const result = await this.playPreparedBlob(blob, token);
+        if (result?.cancelled) {
+          return { reason: "stopped", cancelled: true };
+        }
+      }
+
+      if (token !== this.requestToken) {
+        return { reason: "stopped", cancelled: true };
+      }
+
+      this.continuousQueueActive = false;
+      this.finishPlayback();
+      return { reason: "ended", cancelled: false, chunks: chunks.length };
+    } catch (error) {
+      if (token === this.requestToken) {
+        this.continuousQueueActive = false;
+        this.angel?.setSpeaking(false);
+        this.onState("error");
+      }
+      throw error;
+    }
   }
 
   async speak(text) {
@@ -132,6 +284,7 @@ export class VoiceController {
   stop({ invalidate = true } = {}) {
     if (invalidate) this.requestToken += 1;
 
+    this.continuousQueueActive = false;
     this.resolvePlayback("stopped");
     this.audio.pause();
     this.audio.removeAttribute("src");
@@ -171,19 +324,7 @@ export class VoiceController {
   }
 
   async speakAndWait(text) {
-    await this.speak(text);
-
-    if (this.audio.ended) {
-      return { reason: "ended", cancelled: false };
-    }
-
-    if (this.audio.paused) {
-      return { reason: "stopped", cancelled: true };
-    }
-
-    return new Promise((resolve) => {
-      this.playbackResolvers.add(resolve);
-    });
+    return this.speakContinuousAndWait(text);
   }
 
   update(_delta, elapsed) {
