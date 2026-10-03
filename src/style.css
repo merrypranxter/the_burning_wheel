@@ -1107,3 +1107,141 @@ html[style*="--breach: 1"] .hud__label {
     padding: 5px;
   }
 }
+
+
+/* Job 17 — stage video export */
+.control-bank--export {
+  align-items: stretch;
+}
+
+.export-console {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 5px;
+  align-items: end;
+  min-width: 0;
+}
+
+.export-field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  font: 700 7px/1 "Courier New", Courier, monospace;
+}
+
+.export-field > span {
+  padding-left: 1px;
+}
+
+#export-aspect,
+#export-resolution {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 6px 20px 6px 6px;
+  background: #fff7cf;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.2vw, 10px) / 1 "Courier New", Courier, monospace;
+  cursor: pointer;
+}
+
+#export-skit,
+#export-download {
+  appearance: none;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 7px 8px;
+  background: #86ff5b;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.2vw, 10px) / 1 "Courier New", Courier, monospace;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#export-download {
+  background: #00e5ff;
+}
+
+#export-download[hidden] {
+  display: none;
+}
+
+#export-skit:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+#export-status {
+  grid-column: 1 / -1;
+  padding: 5px 6px;
+  border: 2px solid #120c00;
+  background: #120c00;
+  color: #ffc800;
+  font: 700 8px/1.15 "Courier New", Courier, monospace;
+  text-align: center;
+}
+
+#export-status[data-state="preparing"],
+#export-status[data-state="framing"] {
+  background: #ffe84d;
+  color: #120c00;
+}
+
+#export-status[data-state="recording"] {
+  background: #ff2fb7;
+  color: #120c00;
+}
+
+#export-status[data-state="ready"],
+#export-status[data-state="complete"] {
+  background: #86ff5b;
+  color: #120c00;
+}
+
+#export-status[data-state="error"] {
+  background: #ff69cf;
+  color: #120c00;
+}
+
+.export-help {
+  grid-column: 1 / -1;
+  padding: 5px 6px;
+  border: 1px solid #120c00;
+  background: rgba(255, 247, 207, 0.9);
+  font: 700 7px/1.25 "Courier New", Courier, monospace;
+}
+
+#export-skit:active,
+#export-download:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 #120c00;
+}
+
+#stage[data-exporting="true"] {
+  background: #168cff;
+}
+
+@media (max-width: 520px) {
+  .export-console {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #export-aspect,
+  #export-resolution,
+  #export-skit,
+  #export-download {
+    font-size: 7px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .export-help {
+    display: none;
+  }
+}
