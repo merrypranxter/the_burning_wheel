@@ -234,3 +234,36 @@ The center eye now receives speech-timed blinks and subtle voice energy, while t
 The washed-out/fogged body was traced to the heaven gradient itself: the sky plane was translucent with depth testing disabled, so the transparent pass was compositing blue over the already-rendered angel. The sky is now fully opaque and rendered as a true background layer rather than an alpha veil.
 
 The horizon glow now depth-tests behind the model and has been reduced slightly, preserving atmosphere without bleaching the gold wheel structure or core. Clouds remain behind the angel and keep their dithered atmospheric behavior.
+
+
+## Near-term roadmap
+
+The next passes are deliberately prioritized around **making finished performances easy to watch and export**, not just adding more ornament.
+
+### Job 15 — Wing manifestation pass
+Add multiple biblically weird, non-Euclidean wing clusters behind and around the main wheel body. Wings must never obscure the central eye or speaking core. They should react to speech/gestures and feel spatially impossible rather than like a normal left/right bird-wing pair.
+
+### Job 16 — Continuous rant speech pass
+Fix the long dead air between generated paragraphs. Brain/rant output should be normalized into **one continuous spoken rant** before TTS: preserve paragraph boundaries as simple line breaks for readability in the editor, but do not split them into separate voice requests with long waits between each paragraph. The goal is one continuous delivery with natural sentence/paragraph cadence instead of multiple disconnected utterances.
+
+Implementation note: the current skit runner treats each `SAY` as a separate ElevenLabs request and waits for it to finish. Job 16 should add a continuous-rant path that collapses adjacent prose chunks into one speech payload where practical, while preserving performance cues around the monologue. If TTS length limits require chunking, transitions should be seamless and should not add deliberate paragraph pauses.
+
+### Job 17 — Video export
+Add in-browser export of a performed skit to a finished video file.
+
+Required framing presets:
+- **9:16** portrait / phone
+- **16:9** landscape / laptop-screen style
+- **1:1** square
+- **4:3** landscape
+- **3:4** portrait
+
+Required resolution presets:
+- **480p**
+- **720p**
+- **1080p**
+
+Export should capture the rendered stage plus synchronized Burning Wheel voice/performance, not the lab controls. The selected aspect ratio should reframe the stage rather than merely crop the existing viewport. The export UI should make aspect ratio and resolution explicit before rendering/recording.
+
+### Later passes
+After Jobs 15–17: revisit the voice-aperture/impossible-mouth experiment, chaos/glory enhancement, and self-critique/directorial feedback layer.
