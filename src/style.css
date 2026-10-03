@@ -1245,3 +1245,41 @@ html[style*="--breach: 1"] .hud__label {
     display: none;
   }
 }
+
+
+/* Job 18 — impossible voice aperture */
+#voice-aperture-toggle {
+  grid-column: 1 / -1;
+  appearance: none;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 6px 8px;
+  background: #00e5ff;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.2vw, 10px) / 1 "Courier New", Courier, monospace;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#voice-aperture-toggle[aria-pressed="false"] {
+  background: #fff7cf;
+}
+
+#voice-aperture-toggle:hover,
+#voice-aperture-toggle:focus-visible {
+  background: #ff69cf;
+  outline: none;
+}
+
+#voice-aperture-toggle:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 #120c00;
+}
+
+@media (max-width: 520px) {
+  #voice-aperture-toggle {
+    font-size: 7px;
+    padding: 5px 6px;
+  }
+}
