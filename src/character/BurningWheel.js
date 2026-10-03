@@ -224,7 +224,7 @@ export class BurningWheel {
     this.group.add(this.body);
 
     this.voiceAperture = new VoiceAperture();
-    this.group.add(this.voiceAperture.group);
+    this.body.add(this.voiceAperture.group);
 
     const coreParts = createCore();
     this.core = coreParts.group;
