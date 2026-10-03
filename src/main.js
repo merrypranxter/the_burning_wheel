@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { BurningWheel } from "./character/BurningWheel.js";
+import { BrainController } from "./brain/BrainController.js";
 import { ContainmentEngine } from "./character/ContainmentEngine.js";
 import { PerformanceEngine } from "./performance/PerformanceEngine.js";
 import { directDialogue } from "./performance/AutoDirector.js";
@@ -30,6 +31,10 @@ const skitLoadGodRant = document.querySelector("#skit-load-god-rant");
 const directorText = document.querySelector("#director-text");
 const directorBuild = document.querySelector("#director-build");
 const directorStatus = document.querySelector("#director-status");
+const brainPrompt = document.querySelector("#brain-prompt");
+const brainPreset = document.querySelector("#brain-preset");
+const brainGenerate = document.querySelector("#brain-generate");
+const brainStatus = document.querySelector("#brain-status");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#168cff");
@@ -138,6 +143,26 @@ const voice = new VoiceController({
   },
 });
 
+const brain = new BrainController({
+  onState(state) {
+    if (!brainStatus) return;
+
+    const labels = {
+      idle: "BRAIN IDLE",
+      thinking: "THINKING...",
+      ready: "THOUGHT ACQUIRED",
+      error: "BRAIN ERROR",
+    };
+
+    brainStatus.textContent = labels[state] || state.toUpperCase();
+    brainStatus.dataset.state = state;
+
+    if (brainGenerate) {
+      brainGenerate.toggleAttribute("disabled", state === "thinking");
+    }
+  },
+});
+
 const pointer = new THREE.Vector2(0, 0);
 let motionEnabled = true;
 let elapsed = 0;
@@ -199,6 +224,47 @@ voiceSpeed?.addEventListener("input", () => {
 
   if (voiceSpeedValue) {
     voiceSpeedValue.textContent = `${rate.toFixed(2)}×`;
+  }
+});
+
+brainGenerate?.addEventListener("click", async () => {
+  const prompt = brainPrompt?.value || "";
+  const preset = brainPreset?.value || "default";
+
+  try {
+    const thought = await brain.generate(prompt, preset);
+    if (thought?.cancelled) return;
+
+    if (directorText) {
+      directorText.value = thought.dialogue;
+    }
+
+    const directed = directDialogue(thought.dialogue, {
+      title: thought.title || "BRAIN-GENERATED BURNING WHEEL",
+    });
+
+    if (skitScript) {
+      skitScript.value = directed.script;
+      skitScript.scrollTop = 0;
+    }
+
+    if (directorStatus) {
+      directorStatus.textContent =
+        `DIRECTED // ${directed.stats.chunks} LINES // ${directed.stats.gestures} GESTURES`;
+      directorStatus.dataset.state = "ready";
+    }
+
+    if (brainStatus) {
+      brainStatus.textContent =
+        `READY // ${thought.model || "BRAIN"}`;
+      brainStatus.dataset.state = "ready";
+    }
+  } catch (error) {
+    console.error(error);
+    if (brainStatus) {
+      brainStatus.textContent = error?.message || "BRAIN FAILURE";
+      brainStatus.dataset.state = "error";
+    }
   }
 });
 
@@ -511,6 +577,7 @@ function animate(now) {
 }
 
 window.addEventListener("beforeunload", () => {
+  brain.cancel();
   performanceEngine.stop({ silent: true });
   voice.dispose();
 });
