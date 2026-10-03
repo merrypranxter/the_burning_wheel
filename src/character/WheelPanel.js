@@ -4,8 +4,8 @@ const PANEL_TYPES = [
   "cutout-eye",
   "led-eye",
   "cutout-eye",
+  "cutout-eye",
   "symbol",
-  "marquee",
   "face",
   "led-eye",
   "glitch",
@@ -392,10 +392,34 @@ export class WheelPanel {
 
     ctx.clearRect(0, 0, w, h);
 
-    ctx.fillStyle = this.panicActive ? "#ff5bd9" : "#fffdf7";
+    const sclera = ctx.createRadialGradient(
+      cx - 4,
+      cy - 5,
+      1,
+      cx,
+      cy,
+      15
+    );
+    sclera.addColorStop(0, this.panicActive ? "#fff5ff" : "#ffffff");
+    sclera.addColorStop(0.62, this.panicActive ? "#ff9be8" : "#fff8ef");
+    sclera.addColorStop(1, this.panicActive ? "#ff4fd8" : "#d9c8be");
+    ctx.fillStyle = sclera;
     ctx.beginPath();
     ctx.ellipse(cx, cy, 13, Math.max(1.4, 13 * openness), 0, 0, Math.PI * 2);
     ctx.fill();
+
+    if (openness > 0.35) {
+      ctx.strokeStyle = "rgba(200, 58, 72, 0.38)";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(4, cy - 3);
+      ctx.lineTo(9, cy - 1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(28, cy + 4);
+      ctx.lineTo(23, cy + 2);
+      ctx.stroke();
+    }
 
     ctx.strokeStyle = "#3d2508";
     ctx.lineWidth = 2;
@@ -405,7 +429,23 @@ export class WheelPanel {
     const irisY = cy + this.pupilY * 4.2;
     const irisRadius = this.panicActive ? 6.2 : 5.5;
 
-    ctx.fillStyle = this.irisColor;
+    ctx.fillStyle = "#20122d";
+    ctx.beginPath();
+    ctx.arc(irisX, irisY, irisRadius + 1.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    const iris = ctx.createRadialGradient(
+      irisX - 1,
+      irisY - 2,
+      1,
+      irisX,
+      irisY,
+      irisRadius
+    );
+    iris.addColorStop(0, "#dffcff");
+    iris.addColorStop(0.28, this.irisColor);
+    iris.addColorStop(1, "#28133d");
+    ctx.fillStyle = iris;
     ctx.beginPath();
     ctx.arc(irisX, irisY, irisRadius, 0, Math.PI * 2);
     ctx.fill();
@@ -418,6 +458,7 @@ export class WheelPanel {
     if (openness > 0.2) {
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(Math.round(irisX - 2), Math.round(irisY - 3), 2, 2);
+      ctx.fillRect(Math.round(irisX + 2), Math.round(irisY + 1), 1, 1);
     }
   }
 
@@ -434,7 +475,18 @@ export class WheelPanel {
 
     ctx.clearRect(0, 0, w, h);
 
-    ctx.fillStyle = "#f6fbff";
+    const ledSclera = ctx.createRadialGradient(
+      cx - 3,
+      cy - 4,
+      1,
+      cx,
+      cy,
+      14
+    );
+    ledSclera.addColorStop(0, "#ffffff");
+    ledSclera.addColorStop(0.7, "#eefcff");
+    ledSclera.addColorStop(1, "#a8bdc8");
+    ctx.fillStyle = ledSclera;
     ctx.beginPath();
     ctx.ellipse(cx, cy, 12.5, Math.max(1.3, 12.5 * openness), 0, 0, Math.PI * 2);
     ctx.fill();
