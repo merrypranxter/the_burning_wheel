@@ -954,3 +954,156 @@ html[style*="--breach: 1"] .hud__label {
     padding: 5px;
   }
 }
+
+
+/* Job 10 — Notebook rant churner */
+.control-bank--rant {
+  align-items: stretch;
+}
+
+.rant-console {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+  align-items: start;
+}
+
+#rant-bank,
+#rant-current {
+  min-width: 0;
+  width: 100%;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 7px 8px;
+  background: #fff7cf;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.2vw, 10px) / 1.28 "Courier New", Courier, monospace;
+}
+
+#rant-bank {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-height: 130px;
+  max-height: 300px;
+  resize: vertical;
+}
+
+#rant-current {
+  grid-column: 1;
+  min-height: 84px;
+  max-height: 180px;
+  resize: vertical;
+  background: #e9fff0;
+}
+
+#rant-bank:focus,
+#rant-current:focus {
+  outline: none;
+  background: #ffffff;
+  box-shadow: 3px 3px 0 #120c00;
+}
+
+.rant-buttons {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.rant-buttons button {
+  appearance: none;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 7px 8px;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.2vw, 10px) / 1 "Courier New", Courier, monospace;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#rant-save {
+  background: #ffe84d;
+}
+
+#rant-churn {
+  background: #6df7ff;
+}
+
+#rant-think {
+  background: #b86cff;
+}
+
+#rant-reset {
+  background: #ff9eb7;
+}
+
+.rant-buttons button:hover,
+.rant-buttons button:focus-visible {
+  background: #ff69cf;
+  outline: none;
+}
+
+.rant-buttons button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 #120c00;
+}
+
+#rant-status {
+  grid-column: 1;
+  padding: 5px 6px;
+  border: 2px solid #120c00;
+  background: #120c00;
+  color: #ffc800;
+  font: 700 8px/1.15 "Courier New", Courier, monospace;
+}
+
+#rant-status[data-state="ready"] {
+  background: #86ff5b;
+  color: #120c00;
+}
+
+#rant-status[data-state="error"] {
+  background: #ff2fb7;
+  color: #120c00;
+}
+
+@media (max-width: 720px) {
+  .rant-console {
+    grid-template-columns: minmax(0, 1fr) 104px;
+  }
+
+  #rant-bank {
+    min-height: 110px;
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 520px) {
+  .rant-console {
+    grid-template-columns: minmax(0, 1fr) 86px;
+  }
+
+  #rant-bank,
+  #rant-current {
+    font-size: 7px;
+    padding: 5px 6px;
+  }
+
+  #rant-bank {
+    min-height: 96px;
+    max-height: 180px;
+  }
+
+  #rant-current {
+    min-height: 72px;
+  }
+
+  .rant-buttons button,
+  #rant-status {
+    font-size: 7px;
+    padding: 5px;
+  }
+}
