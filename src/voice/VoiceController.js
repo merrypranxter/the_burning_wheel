@@ -71,6 +71,7 @@ export class VoiceController {
     this.context = null;
     this.source = null;
     this.analyser = null;
+    this.captureDestination = null;
     this.timeData = null;
     this.frequencyData = null;
 
@@ -85,6 +86,7 @@ export class VoiceController {
     this.requestToken = 0;
     this.playbackResolvers = new Set();
     this.continuousQueueActive = false;
+    this.preparedSpeech = new Map();
 
     this.audio.addEventListener("play", () => {
       this.angel?.setSpeaking(true);
@@ -114,6 +116,7 @@ export class VoiceController {
     this.context = new AudioContext();
     this.source = this.context.createMediaElementSource(this.audio);
     this.analyser = this.context.createAnalyser();
+    this.captureDestination = this.context.createMediaStreamDestination();
     this.analyser.fftSize = 256;
     this.analyser.smoothingTimeConstant = 0.78;
 
@@ -122,12 +125,54 @@ export class VoiceController {
 
     this.source.connect(this.analyser);
     this.analyser.connect(this.context.destination);
+    this.analyser.connect(this.captureDestination);
   }
 
   setPlaybackRate(rate = 1) {
     this.playbackRate = Math.max(0.6, Math.min(1.8, Number(rate) || 1));
     this.audio.playbackRate = this.playbackRate;
     this.audio.defaultPlaybackRate = this.playbackRate;
+  }
+
+  speechKey(text) {
+    return normalizeContinuousSpeech(text);
+  }
+
+  async prepareSpeech(text) {
+    const key = this.speechKey(text);
+    const chunks = splitContinuousSpeech(key);
+
+    if (!chunks.length) {
+      throw new Error("Give him something to say first.");
+    }
+
+    const blobs = await Promise.all(
+      chunks.map((chunk) => this.fetchSpeechBlob(chunk, null))
+    );
+
+    this.preparedSpeech.set(key, blobs);
+    return { key, chunks: blobs.length };
+  }
+
+  takePreparedSpeech(text) {
+    const key = this.speechKey(text);
+    const blobs = this.preparedSpeech.get(key) || null;
+
+    if (blobs) {
+      this.preparedSpeech.delete(key);
+    }
+
+    return blobs;
+  }
+
+  async getRecordingStream() {
+    await this.ensureAudioGraph();
+
+    if (this.context.state === "suspended") {
+      await this.context.resume();
+    }
+
+    return this.captureDestination?.stream || null;
   }
 
   async fetchSpeechBlob(text, token) {
@@ -137,7 +182,7 @@ export class VoiceController {
       body: JSON.stringify({ text }),
     });
 
-    if (token !== this.requestToken) {
+    if (token !== null && token !== undefined && token !== this.requestToken) {
       return null;
     }
 
@@ -193,11 +238,14 @@ export class VoiceController {
     this.onState("summoning");
 
     try {
-      // Generate every hidden TTS chunk up front. That moves any network wait
-      // to the beginning so paragraph boundaries do not create dead air later.
-      const blobs = await Promise.all(
-        chunks.map((chunk) => this.fetchSpeechBlob(chunk, token))
-      );
+      // Export can pre-generate the exact speech before recording starts.
+      // Normal playback still falls back to generating all hidden chunks here.
+      const prepared = this.takePreparedSpeech(text);
+      const blobs =
+        prepared ||
+        (await Promise.all(
+          chunks.map((chunk) => this.fetchSpeechBlob(chunk, token))
+        ));
 
       if (token !== this.requestToken) {
         return { reason: "stopped", cancelled: true };
@@ -409,6 +457,7 @@ export class VoiceController {
 
   dispose() {
     this.stop();
+    this.preparedSpeech.clear();
 
     if (this.context) {
       this.context.close();
