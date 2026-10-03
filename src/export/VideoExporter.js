@@ -1,3 +1,8 @@
+import {
+  applyExportLook,
+  getInternalDimensions,
+} from "./ExportLooks.js";
+
 const ASPECTS = {
   "9:16": [9, 16],
   "16:9": [16, 9],
@@ -103,42 +108,111 @@ export class VideoExporter {
     this.active = false;
     this.captureCanvas = null;
     this.captureContext = null;
+    this.processingCanvas = null;
+    this.processingContext = null;
+    this.exportLook = "dither-monster";
+    this.internalScale = 0.33;
+    this.frameIndex = 0;
   }
 
   captureFrame() {
-    if (!this.active || !this.captureCanvas || !this.captureContext) return;
+    if (
+      !this.active ||
+      !this.captureCanvas ||
+      !this.captureContext ||
+      !this.processingCanvas ||
+      !this.processingContext
+    ) {
+      return;
+    }
 
-    const ctx = this.captureContext;
-    const width = this.captureCanvas.width;
-    const height = this.captureCanvas.height;
+    const finalCtx = this.captureContext;
+    const processCtx = this.processingContext;
+    const finalWidth = this.captureCanvas.width;
+    const finalHeight = this.captureCanvas.height;
+    const processWidth = this.processingCanvas.width;
+    const processHeight = this.processingCanvas.height;
     const source = this.renderer.domElement;
 
-    ctx.save();
-    ctx.clearRect(0, 0, width, height);
-    ctx.imageSmoothingEnabled = false;
+    processCtx.save();
+    processCtx.clearRect(0, 0, processWidth, processHeight);
+    processCtx.imageSmoothingEnabled = false;
 
     const breach = Math.max(
       0,
       Math.min(1, Number(this.containment?.breachLevel) || 0)
     );
 
-    if ("filter" in ctx) {
-      ctx.filter =
+    if ("filter" in processCtx) {
+      processCtx.filter =
         `saturate(${1 + breach * 3.8}) contrast(${1 + breach * 0.35})`;
     }
 
-    ctx.drawImage(source, 0, 0, width, height);
+    // The WebGL renderer is deliberately running at the small internal
+    // resolution during ugly export. Keep it native here: no smoothing.
+    processCtx.drawImage(
+      source,
+      0,
+      0,
+      processWidth,
+      processHeight
+    );
 
-    if ("filter" in ctx) {
-      ctx.filter = "none";
+    if ("filter" in processCtx) {
+      processCtx.filter = "none";
     }
 
     const overlay = this.containment?.overlay;
     if (overlay?.width && overlay?.height) {
-      ctx.drawImage(overlay, 0, 0, width, height);
+      // Composite containment/glitch effects BEFORE dithering so they belong
+      // to the same busted artifact instead of looking pasted on afterward.
+      processCtx.drawImage(
+        overlay,
+        0,
+        0,
+        processWidth,
+        processHeight
+      );
     }
 
-    ctx.restore();
+    processCtx.restore();
+
+    if (this.exportLook !== "clean") {
+      const image = processCtx.getImageData(
+        0,
+        0,
+        processWidth,
+        processHeight
+      );
+
+      applyExportLook(image, {
+        look: this.exportLook,
+        internalScale: this.internalScale,
+        frameIndex: this.frameIndex,
+      });
+
+      processCtx.putImageData(image, 0, 0);
+    }
+
+    finalCtx.save();
+    finalCtx.clearRect(0, 0, finalWidth, finalHeight);
+    finalCtx.imageSmoothingEnabled = false;
+
+    // High-resolution container, low-resolution soul.
+    finalCtx.drawImage(
+      this.processingCanvas,
+      0,
+      0,
+      processWidth,
+      processHeight,
+      0,
+      0,
+      finalWidth,
+      finalHeight
+    );
+
+    finalCtx.restore();
+    this.frameIndex += 1;
   }
 
   createRecorder(stream, width, height) {
@@ -159,7 +233,13 @@ export class VideoExporter {
 
   async exportSkit(
     source,
-    { aspect = "16:9", resolution = 720, frameRate = 30 } = {}
+    {
+      aspect = "16:9",
+      resolution = 720,
+      frameRate = 30,
+      look = "dither-monster",
+      internalScale = 0.33,
+    } = {}
   ) {
     if (this.active) {
       throw new Error("An export is already running.");
@@ -180,12 +260,26 @@ export class VideoExporter {
     }
 
     const { width, height } = getExportDimensions(aspect, resolution);
+    const {
+      width: internalWidth,
+      height: internalHeight,
+      config: lookConfig,
+    } = getInternalDimensions(
+      width,
+      height,
+      look,
+      internalScale
+    );
+
     let recorder = null;
     let videoStream = null;
     let combinedStream = null;
     const chunks = [];
 
     this.active = true;
+    this.exportLook = lookConfig.key;
+    this.internalScale = lookConfig.internalScale;
+    this.frameIndex = 0;
 
     try {
       this.onState("preparing", `PREPARING AUDIO // ${width}×${height}`);
@@ -198,8 +292,18 @@ export class VideoExporter {
         throw new Error("Could not create the export audio track.");
       }
 
-      this.onState("framing", `FRAMING // ${aspect} // ${resolution}P`);
-      this.setExportViewport(width, height, aspect);
+      this.onState(
+        "framing",
+        `FRAMING // ${aspect} // ${resolution}P // ${lookConfig.label}`
+      );
+
+      // The scene itself renders at the intentionally ugly internal size.
+      // The recorder canvas stays at the requested final delivery size.
+      this.setExportViewport(
+        internalWidth,
+        internalHeight,
+        aspect
+      );
 
       this.captureCanvas = document.createElement("canvas");
       this.captureCanvas.width = width;
@@ -211,6 +315,22 @@ export class VideoExporter {
       if (!this.captureContext) {
         throw new Error("Could not create the export canvas.");
       }
+
+      this.captureContext.imageSmoothingEnabled = false;
+
+      this.processingCanvas = document.createElement("canvas");
+      this.processingCanvas.width = internalWidth;
+      this.processingCanvas.height = internalHeight;
+      this.processingContext = this.processingCanvas.getContext("2d", {
+        alpha: false,
+        willReadFrequently: this.exportLook !== "clean",
+      });
+
+      if (!this.processingContext) {
+        throw new Error("Could not create the dither canvas.");
+      }
+
+      this.processingContext.imageSmoothingEnabled = false;
 
       await waitFrame();
       await waitFrame();
@@ -237,7 +357,10 @@ export class VideoExporter {
       });
 
       recorder.start(250);
-      this.onState("recording", `RECORDING // ${width}×${height}`);
+      this.onState(
+        "recording",
+        `RECORDING // ${width}×${height} // INTERNAL ${internalWidth}×${internalHeight} // ${lookConfig.label}`
+      );
 
       const result = await this.performanceEngine.run(script);
 
@@ -277,6 +400,10 @@ export class VideoExporter {
         height,
         aspect,
         resolution: Number(resolution),
+        look: lookConfig.key,
+        internalScale: lookConfig.internalScale,
+        internalWidth,
+        internalHeight,
         cancelled: Boolean(result?.cancelled),
       };
     } finally {
@@ -293,6 +420,8 @@ export class VideoExporter {
 
       this.captureCanvas = null;
       this.captureContext = null;
+      this.processingCanvas = null;
+      this.processingContext = null;
       this.active = false;
       this.restoreViewport();
     }
