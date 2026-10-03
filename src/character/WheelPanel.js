@@ -381,67 +381,44 @@ export class WheelPanel {
 
   drawCutoutEye(elapsed) {
     const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
     const blink = this.blinkAmount(elapsed);
-    const lid = this.panicActive
-      ? 1.18
-      : clamp(1 - blink * 0.93, 0.08, 1);
+    const openness = this.panicActive
+      ? 1
+      : clamp(1 - blink * 0.94, 0.08, 1);
 
-    this.clear(this.panicActive ? "#2a001f" : "#1d1209");
+    ctx.clearRect(0, 0, w, h);
 
-    ctx.fillStyle = this.paperTone;
+    ctx.fillStyle = this.panicActive ? "#ff5bd9" : "#fffdf7";
     ctx.beginPath();
-    ctx.moveTo(4, 5);
-    ctx.lineTo(43, 3);
-    ctx.lineTo(46, 21);
-    ctx.lineTo(39, 25);
-    ctx.lineTo(7, 24);
-    ctx.lineTo(2, 19);
-    ctx.closePath();
+    ctx.ellipse(cx, cy, 13, Math.max(1.4, 13 * openness), 0, 0, Math.PI * 2);
     ctx.fill();
 
-    const eyeY = 14;
-    const eyeHalfHeight = Math.max(1.5, 7 * lid);
+    ctx.strokeStyle = "#3d2508";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-    ctx.fillStyle = "#fffdf7";
-    ctx.beginPath();
-    ctx.ellipse(24, eyeY, 16, eyeHalfHeight, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    const irisX = 24 + this.pupilX * 5.2;
-    const irisY = eyeY + this.pupilY * 3.0;
-    const irisRadius = this.panicActive ? 6.3 : Math.max(2.2, 5.4 * lid);
+    const irisX = cx + this.pupilX * 4.8;
+    const irisY = cy + this.pupilY * 4.2;
+    const irisRadius = this.panicActive ? 6.2 : 5.5;
 
     ctx.fillStyle = this.irisColor;
     ctx.beginPath();
     ctx.arc(irisX, irisY, irisRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#15100d";
+    ctx.fillStyle = "#120d0b";
     ctx.beginPath();
-    ctx.arc(
-      irisX,
-      irisY,
-      this.panicActive ? 2.0 : Math.max(1.4, 2.9 * lid),
-      0,
-      Math.PI * 2
-    );
+    ctx.arc(irisX, irisY, this.panicActive ? 2.1 : 2.7, 0, Math.PI * 2);
     ctx.fill();
 
-    if (lid > 0.22) {
+    if (openness > 0.2) {
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(Math.round(irisX - 1), Math.round(irisY - 2), 2, 2);
+      ctx.fillRect(Math.round(irisX - 2), Math.round(irisY - 3), 2, 2);
     }
-
-    ctx.strokeStyle = "#1b120f";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(7, eyeY);
-    ctx.quadraticCurveTo(24, eyeY - 10 * lid, 41, eyeY);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(7, eyeY);
-    ctx.quadraticCurveTo(24, eyeY + 10 * lid, 41, eyeY);
-    ctx.stroke();
   }
 
   drawLedEye(elapsed) {
