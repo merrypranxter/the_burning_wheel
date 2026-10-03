@@ -130,3 +130,114 @@ export function applyExportLook(
 }
 
 export const EXPORT_LOOK_KEYS = Object.keys(LOOKS);
+
+
+export function drawGildedPixelFrame(
+  ctx,
+  width,
+  height,
+  style = "none"
+) {
+  if (!ctx || style !== "gilded-pixel") return;
+
+  const minDim = Math.max(1, Math.min(width, height));
+  const unit = Math.max(1, Math.round(minDim / 320));
+  const inset = unit * 3;
+  const outer = unit * 2;
+  const inner = unit;
+  const corner = unit * 10;
+
+  const GOLD_LIGHT = "#fff1a6";
+  const GOLD = "#e7b83f";
+  const GOLD_DARK = "#7b4b12";
+  const GOLD_DEEP = "#3d2508";
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  // Thin layered rectangular gilding.
+  ctx.fillStyle = GOLD_DEEP;
+  ctx.fillRect(inset, inset, width - inset * 2, outer);
+  ctx.fillRect(inset, height - inset - outer, width - inset * 2, outer);
+  ctx.fillRect(inset, inset, outer, height - inset * 2);
+  ctx.fillRect(width - inset - outer, inset, outer, height - inset * 2);
+
+  ctx.fillStyle = GOLD;
+  ctx.fillRect(inset + unit, inset + unit, width - (inset + unit) * 2, inner);
+  ctx.fillRect(
+    inset + unit,
+    height - inset - unit * 2,
+    width - (inset + unit) * 2,
+    inner
+  );
+  ctx.fillRect(inset + unit, inset + unit, inner, height - (inset + unit) * 2);
+  ctx.fillRect(
+    width - inset - unit * 2,
+    inset + unit,
+    inner,
+    height - (inset + unit) * 2
+  );
+
+  // Little stepped Renaissance-ish corner ornaments: deliberately chunky,
+  // more "bad digitized gilt frame" than museum reproduction.
+  const drawCorner = (x, y, sx, sy) => {
+    ctx.fillStyle = GOLD_DARK;
+    ctx.fillRect(x, y, sx * corner, sy * unit * 2);
+    ctx.fillRect(x, y, sx * unit * 2, sy * corner);
+
+    ctx.fillStyle = GOLD;
+    ctx.fillRect(
+      x + sx * unit * 2,
+      y + sy * unit * 2,
+      sx * unit * 5,
+      sy * unit * 2
+    );
+    ctx.fillRect(
+      x + sx * unit * 2,
+      y + sy * unit * 2,
+      sx * unit * 2,
+      sy * unit * 5
+    );
+
+    ctx.fillStyle = GOLD_LIGHT;
+    ctx.fillRect(
+      x + sx * unit * 4,
+      y + sy * unit * 4,
+      sx * unit * 2,
+      sy * unit
+    );
+    ctx.fillRect(
+      x + sx * unit * 4,
+      y + sy * unit * 4,
+      sx * unit,
+      sy * unit * 2
+    );
+
+    // Tiny diamond-ish block for a hint of old ornamental metalwork.
+    const dx = x + sx * unit * 7;
+    const dy = y + sy * unit * 7;
+    ctx.fillRect(dx, dy, sx * unit, sy * unit);
+    ctx.fillStyle = GOLD_DARK;
+    ctx.fillRect(dx + sx * unit, dy, sx * unit, sy * unit);
+    ctx.fillRect(dx, dy + sy * unit, sx * unit, sy * unit);
+  };
+
+  drawCorner(inset + outer, inset + outer, 1, 1);
+  drawCorner(width - inset - outer, inset + outer, -1, 1);
+  drawCorner(inset + outer, height - inset - outer, 1, -1);
+  drawCorner(width - inset - outer, height - inset - outer, -1, -1);
+
+  // Sparse repeating inner ticks keep it ornate without turning into a giant
+  // baroque border.
+  ctx.fillStyle = GOLD_LIGHT;
+  const tickGap = unit * 18;
+  const topY = inset + outer + unit * 2;
+  const bottomY = height - topY - unit;
+
+  for (let x = inset + corner + unit * 2; x < width - inset - corner; x += tickGap) {
+    ctx.fillRect(x, topY, unit * 2, unit);
+    ctx.fillRect(x, bottomY, unit * 2, unit);
+  }
+
+  ctx.restore();
+}
