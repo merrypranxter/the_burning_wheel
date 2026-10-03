@@ -1,5 +1,6 @@
 import {
   applyExportLook,
+  drawGildedPixelFrame,
   getInternalDimensions,
 } from "./ExportLooks.js";
 
@@ -112,6 +113,7 @@ export class VideoExporter {
     this.processingContext = null;
     this.exportLook = "dither-monster";
     this.internalScale = 0.33;
+    this.frameStyle = "none";
     this.frameIndex = 0;
   }
 
@@ -194,6 +196,13 @@ export class VideoExporter {
       processCtx.putImageData(image, 0, 0);
     }
 
+    drawGildedPixelFrame(
+      processCtx,
+      processWidth,
+      processHeight,
+      this.frameStyle
+    );
+
     finalCtx.save();
     finalCtx.clearRect(0, 0, finalWidth, finalHeight);
     finalCtx.imageSmoothingEnabled = false;
@@ -239,6 +248,7 @@ export class VideoExporter {
       frameRate = 30,
       look = "dither-monster",
       internalScale = 0.33,
+      frameStyle = "none",
     } = {}
   ) {
     if (this.active) {
@@ -279,6 +289,7 @@ export class VideoExporter {
     this.active = true;
     this.exportLook = lookConfig.key;
     this.internalScale = lookConfig.internalScale;
+    this.frameStyle = frameStyle === "gilded-pixel" ? "gilded-pixel" : "none";
     this.frameIndex = 0;
 
     try {
@@ -294,7 +305,7 @@ export class VideoExporter {
 
       this.onState(
         "framing",
-        `FRAMING // ${aspect} // ${resolution}P // ${lookConfig.label}`
+        `FRAMING // ${aspect} // ${resolution}P // ${lookConfig.label}${this.frameStyle === "gilded-pixel" ? " // GILDED FRAME" : ""}`
       );
 
       // The scene itself renders at the intentionally ugly internal size.
@@ -359,7 +370,7 @@ export class VideoExporter {
       recorder.start(250);
       this.onState(
         "recording",
-        `RECORDING // ${width}×${height} // INTERNAL ${internalWidth}×${internalHeight} // ${lookConfig.label}`
+        `RECORDING // ${width}×${height} // INTERNAL ${internalWidth}×${internalHeight} // ${lookConfig.label}${this.frameStyle === "gilded-pixel" ? " // GILDED FRAME" : ""}`
       );
 
       const result = await this.performanceEngine.run(script);
@@ -404,6 +415,7 @@ export class VideoExporter {
         internalScale: lookConfig.internalScale,
         internalWidth,
         internalHeight,
+        frameStyle: this.frameStyle,
         cancelled: Boolean(result?.cancelled),
       };
     } finally {
