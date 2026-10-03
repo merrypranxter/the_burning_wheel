@@ -104,7 +104,7 @@ world.add(cloudLow);
 const clouds = [cloudBackLeft, cloudBackRight, cloudLow];
 
 const angel = new BurningWheel();
-angel.setBaseScale(0.94);
+angel.setBaseScale(1.08);
 world.add(angel.group);
 
 const hoverShadow = new THREE.Mesh(
@@ -630,7 +630,7 @@ function resize() {
     rotation: cloud.rotation.clone(),
   }));
 
-  const characterScale = window.innerWidth < 520 ? 0.82 : 0.94;
+  const characterScale = window.innerWidth < 520 ? 0.92 : 1.08;
   angel.setBaseScale(characterScale);
 }
 
