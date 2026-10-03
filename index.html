@@ -21,7 +21,7 @@
         <div class="hud__chrome">
           <div class="hud__label">
             <strong>THE BURNING WHEEL</strong>
-            <span>JOB 16 // CONTINUOUS RANT</span>
+            <span>JOB 17 // VIDEO EXPORT</span>
           </div>
           <button
             id="hud-toggle"
@@ -190,6 +190,38 @@ AUTOCHAOS ON</textarea>
               <span id="skit-status" role="status" aria-live="polite">SKIT IDLE</span>
               <div class="skit-help">
                 SAY words · RANT…ENDRANT multiline continuous speech · EYE mood seconds · GESTURE name intensity · WAIT · BLINK · AUTOCHAOS · RESET
+              </div>
+            </div>
+          </div>
+
+          <div class="control-bank control-bank--export">
+            <div class="control-bank__name">EXPORT</div>
+            <div class="export-console">
+              <label class="export-field">
+                <span>FRAME</span>
+                <select id="export-aspect" aria-label="Video aspect ratio">
+                  <option value="16:9">16:9 LAPTOP</option>
+                  <option value="9:16">9:16 PHONE</option>
+                  <option value="1:1">1:1 SQUARE</option>
+                  <option value="4:3">4:3</option>
+                  <option value="3:4">3:4 TALL</option>
+                </select>
+              </label>
+
+              <label class="export-field">
+                <span>SIZE</span>
+                <select id="export-resolution" aria-label="Video resolution">
+                  <option value="480">480P</option>
+                  <option value="720" selected>720P</option>
+                  <option value="1080">1080P</option>
+                </select>
+              </label>
+
+              <button id="export-skit" type="button">EXPORT SKIT</button>
+              <a id="export-download" href="#" hidden>SAVE LAST VIDEO</a>
+              <span id="export-status" role="status" aria-live="polite">EXPORT IDLE</span>
+              <div class="export-help">
+                Runs the current SKIT and records only the stage + synchronized voice. Lab controls are not in the video.
               </div>
             </div>
           </div>
