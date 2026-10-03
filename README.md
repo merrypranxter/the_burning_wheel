@@ -209,3 +209,12 @@ The central eye now has two coordinated layers: the physical depth-aware eye and
 The center eye is slightly larger and more organic: richer sclera shading, limbal ring, additional iris fibers, wet corneal highlights, and subtle voice-reactive dilation. Ring eye panels are now biased further toward actual eyeballs and their organic/LED variants have stronger sclera, iris, and highlight treatment.
 
 Character framing was also increased so The Burning Wheel occupies more of the stage on desktop and mobile.
+
+
+### Job 12 — Heaven pass
+
+The old block-cloud placeholder sky has been replaced with a procedural heavenly backdrop. The sky is a quantized blue-to-pearl gradient with visible ordered dithering, layered behind seven softly modeled cloud banks.
+
+Clouds are generated in-browser from shaded radial masses, then their edges and color bodies are deliberately dithered/quantized so they sit between soft atmospheric realism and the project's low-resolution screenprint/game-console language. Layers drift at different speeds with slight pointer parallax and slow breathing, while remaining compatible with ContainmentEngine cloud jitter/collapse effects.
+
+The underlying scene sky is brighter and softer so containment flashes can still bleed through the translucent heaven texture.
