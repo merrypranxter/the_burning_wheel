@@ -232,6 +232,25 @@ export class PerformanceEngine {
     this.currentStep = -1;
   }
 
+  async prepare(source) {
+    const { steps, errors } = parsePerformanceScript(source);
+
+    if (errors.length) {
+      throw new Error(errors.join("\n"));
+    }
+
+    const speechSteps = steps.filter((step) => step.type === "say");
+
+    for (const step of speechSteps) {
+      await this.voice.prepareSpeech(step.text);
+    }
+
+    return {
+      steps: steps.length,
+      speechSteps: speechSteps.length,
+    };
+  }
+
   async run(source) {
     const { steps, errors } = parsePerformanceScript(source);
 
