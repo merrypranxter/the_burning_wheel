@@ -161,6 +161,7 @@ export class WheelPanel {
     this.baseAngle = angle;
     this.trackAngle = angle;
     this.type = type;
+    this.isEyeball = type === "cutout-eye" || type === "led-eye";
     this.color = color;
     this.driftSpeed = driftSpeed;
     this.phase = phase;
@@ -168,9 +169,9 @@ export class WheelPanel {
 
     this.rng = mulberry32(hashString(id));
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 48;
-    this.canvas.height = 28;
-    this.ctx = this.canvas.getContext("2d", { alpha: false });
+    this.canvas.width = this.isEyeball ? 32 : 48;
+    this.canvas.height = this.isEyeball ? 32 : 28;
+    this.ctx = this.canvas.getContext("2d", { alpha: true });
     this.ctx.imageSmoothingEnabled = false;
 
     this.texture = new THREE.CanvasTexture(this.canvas);
