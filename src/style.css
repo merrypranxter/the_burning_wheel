@@ -690,3 +690,139 @@ html[style*="--breach: 1"] .hud__label {
     max-height: 200px;
   }
 }
+
+
+/* Job 08 — auto-director + preferred 1.3x voice speed */
+.voice-speed {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(80px, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid #120c00;
+  background: rgba(255, 247, 207, 0.88);
+  font: 700 8px/1 "Courier New", Courier, monospace;
+}
+
+#voice-speed {
+  width: 100%;
+  accent-color: #ff69cf;
+}
+
+#voice-speed-value {
+  min-width: 38px;
+  text-align: right;
+}
+
+.control-bank--director {
+  align-items: stretch;
+}
+
+.director-console {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+  align-items: start;
+}
+
+#director-text {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-width: 0;
+  width: 100%;
+  min-height: 96px;
+  max-height: 220px;
+  resize: vertical;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 7px 8px;
+  background: #fff7cf;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.2vw, 10px) / 1.28 "Courier New", Courier, monospace;
+}
+
+#director-text:focus {
+  outline: none;
+  background: #ffffff;
+  box-shadow: 3px 3px 0 #120c00;
+}
+
+#director-build {
+  appearance: none;
+  border: 2px solid #120c00;
+  border-radius: 0;
+  padding: 7px 9px;
+  background: #00e5ff;
+  color: #120c00;
+  box-shadow: 2px 2px 0 #120c00;
+  font: 700 clamp(8px, 1.25vw, 10px) / 1 "Courier New", Courier, monospace;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#director-build:hover,
+#director-build:focus-visible {
+  background: #ff69cf;
+  outline: none;
+}
+
+#director-build:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 #120c00;
+}
+
+#director-status {
+  min-width: 112px;
+  padding: 5px 6px;
+  border: 2px solid #120c00;
+  background: #120c00;
+  color: #ffc800;
+  font: 700 8px/1.15 "Courier New", Courier, monospace;
+  text-align: center;
+}
+
+#director-status[data-state="ready"] {
+  background: #86ff5b;
+  color: #120c00;
+}
+
+#director-status[data-state="error"] {
+  background: #ff2fb7;
+  color: #120c00;
+}
+
+@media (max-width: 720px) {
+  .director-console {
+    grid-template-columns: minmax(0, 1fr) 96px;
+  }
+
+  #director-text {
+    min-height: 88px;
+    max-height: 170px;
+  }
+}
+
+@media (max-width: 520px) {
+  .director-console {
+    grid-template-columns: minmax(0, 1fr) 82px;
+  }
+
+  #director-text {
+    min-height: 82px;
+    max-height: 140px;
+    font-size: 7px;
+    padding: 5px 6px;
+  }
+
+  #director-build,
+  #director-status {
+    font-size: 7px;
+    padding: 5px;
+  }
+
+  .voice-speed {
+    font-size: 7px;
+  }
+}
