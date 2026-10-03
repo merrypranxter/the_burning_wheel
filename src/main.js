@@ -7,6 +7,7 @@ import { directDialogue } from "./performance/AutoDirector.js";
 import { RantChurner } from "./rants/RantChurner.js";
 import godRantSkit from "../skits/the-word-god-is-not-god.bwskit?raw";
 import { VoiceController } from "./voice/VoiceController.js";
+import { HeavenBackdrop } from "./visual/HeavenBackdrop.js";
 import "./style.css";
 
 const stage = document.querySelector("#stage");
@@ -45,7 +46,7 @@ const rantReset = document.querySelector("#rant-reset");
 const rantStatus = document.querySelector("#rant-status");
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("#168cff");
+scene.background = new THREE.Color("#5bb9f4");
 
 const camera = new THREE.OrthographicCamera(-4, 4, 3, -3, 0.1, 100);
 camera.position.set(0, 0, 10);
@@ -64,44 +65,8 @@ stage.appendChild(renderer.domElement);
 const world = new THREE.Group();
 scene.add(world);
 
-function makePixelCloud(scale = 1) {
-  const group = new THREE.Group();
-  const material = new THREE.MeshBasicMaterial({
-    color: "#f7fbff",
-    depthWrite: false,
-  });
-
-  const blocks = [
-    [-1.15, 0.00, 1.35, 0.34],
-    [-0.45, 0.17, 1.20, 0.52],
-    [0.35, 0.03, 1.45, 0.38],
-    [1.10, -0.07, 0.68, 0.25],
-  ];
-
-  for (const [x, y, width, height] of blocks) {
-    const geometry = new THREE.PlaneGeometry(width, height);
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, 0);
-    group.add(mesh);
-  }
-
-  group.scale.setScalar(scale);
-  return group;
-}
-
-const cloudBackLeft = makePixelCloud(0.72);
-cloudBackLeft.position.set(-3.0, 1.85, -4);
-world.add(cloudBackLeft);
-
-const cloudBackRight = makePixelCloud(0.58);
-cloudBackRight.position.set(3.1, 1.25, -4);
-world.add(cloudBackRight);
-
-const cloudLow = makePixelCloud(0.45);
-cloudLow.position.set(-2.75, -2.10, -4);
-world.add(cloudLow);
-
-const clouds = [cloudBackLeft, cloudBackRight, cloudLow];
+const heaven = new HeavenBackdrop({ scene });
+const clouds = heaven.clouds;
 
 const angel = new BurningWheel();
 angel.setBaseScale(1.08);
@@ -618,10 +583,7 @@ function resize() {
   renderer.setSize(renderWidth, renderHeight, false);
   containment.resizeOverlay();
 
-  const cloudSpread = Math.min(halfWidth * 0.82, 4.2);
-  cloudBackLeft.position.x = -cloudSpread;
-  cloudBackRight.position.x = cloudSpread;
-  cloudLow.position.x = -cloudSpread * 0.9;
+  heaven.resize({ halfWidth, halfHeight });
 
   containment.cloudBases = clouds.map((cloud) => ({
     cloud,
@@ -647,6 +609,7 @@ function animate(now) {
     elapsed += delta;
 
     angel.update(delta, elapsed, pointer);
+    heaven.update(delta, elapsed, pointer, containment.breachLevel);
     containment.update(delta, elapsed, pointer);
     voice.update(delta, elapsed);
 
@@ -669,6 +632,7 @@ window.addEventListener("beforeunload", () => {
   brain.cancel();
   performanceEngine.stop({ silent: true });
   voice.dispose();
+  heaven.dispose();
 });
 
 requestAnimationFrame(animate);
