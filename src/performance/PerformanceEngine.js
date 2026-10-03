@@ -61,110 +61,152 @@ function splitCommand(line) {
 export function parsePerformanceScript(source) {
   const steps = [];
   const errors = [];
+  const rawLines = String(source || "").split(/\r?\n/);
 
-  String(source || "")
-    .split(/\r?\n/)
-    .forEach((rawLine, index) => {
-      const lineNumber = index + 1;
-      const line = rawLine.trim();
+  for (let index = 0; index < rawLines.length; index += 1) {
+    const rawLine = rawLines[index];
+    const lineNumber = index + 1;
+    const line = rawLine.trim();
 
-      if (!line || line.startsWith("#") || line.startsWith("//")) return;
+    if (!line || line.startsWith("#") || line.startsWith("//")) continue;
 
-      const { command, rest } = splitCommand(line);
+    const { command, rest } = splitCommand(line);
 
-      if (command === "SAY") {
-        if (!rest) {
-          errors.push(`Line ${lineNumber}: SAY needs words.`);
-          return;
-        }
-        steps.push({ type: "say", text: rest, lineNumber });
-        return;
-      }
+    if (command === "RANT") {
+      const rantLines = [];
+      let closed = false;
 
-      if (command === "EYE") {
-        const [name = "neutral", hold = "2.4"] = rest.split(/\s+/);
-        if (!VALID_EYES.has(name)) {
-          errors.push(
-            `Line ${lineNumber}: unknown eye "${name}". Try ${[...VALID_EYES].join(", ")}.`
-          );
-          return;
+      for (index += 1; index < rawLines.length; index += 1) {
+        const candidate = rawLines[index];
+        if (candidate.trim().toUpperCase() === "ENDRANT") {
+          closed = true;
+          break;
         }
 
-        steps.push({
-          type: "eye",
-          name,
-          holdSeconds: Math.max(0, Number(hold) || 0),
-          lineNumber,
-        });
-        return;
+        // Preserve editor line breaks for human readability. The voice layer
+        // flattens them into one continuous utterance before TTS.
+        rantLines.push(candidate.trim());
       }
 
-      if (command === "GESTURE" || command === "BREACH") {
-        const [name, rawIntensity = "1"] = rest.split(/\s+/);
-        if (!VALID_GESTURES.has(name)) {
-          errors.push(
-            `Line ${lineNumber}: unknown gesture "${name || ""}". Try ${[
-              ...VALID_GESTURES,
-            ].join(", ")}.`
-          );
-          return;
-        }
+      const text = rantLines
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
 
-        steps.push({
-          type: "gesture",
-          name,
-          intensity: clamp(Number(rawIntensity) || 1, 0.1, 1.35),
-          lineNumber,
-        });
-        return;
+      if (!closed) {
+        errors.push(`Line ${lineNumber}: RANT needs a closing ENDRANT.`);
+        continue;
       }
 
-      if (command === "WAIT") {
-        steps.push({
-          type: "wait",
-          durationMs: parseDuration(rest, 250),
-          lineNumber,
-        });
-        return;
+      if (!text) {
+        errors.push(`Line ${lineNumber}: RANT needs words.`);
+        continue;
       }
 
-      if (command === "BEAT") {
-        steps.push({
-          type: "wait",
-          durationMs: parseDuration(rest, 180),
-          lineNumber,
-        });
-        return;
+      steps.push({ type: "say", text, lineNumber, continuous: true });
+      continue;
+    }
+
+    if (command === "ENDRANT") {
+      errors.push(`Line ${lineNumber}: ENDRANT without RANT.`);
+      continue;
+    }
+
+    if (command === "SAY") {
+      if (!rest) {
+        errors.push(`Line ${lineNumber}: SAY needs words.`);
+        continue;
+      }
+      steps.push({ type: "say", text: rest, lineNumber });
+      continue;
+    }
+
+    if (command === "EYE") {
+      const [name = "neutral", hold = "2.4"] = rest.split(/\s+/);
+      if (!VALID_EYES.has(name)) {
+        errors.push(
+          `Line ${lineNumber}: unknown eye "${name}". Try ${[
+            ...VALID_EYES,
+          ].join(", ")}.`
+        );
+        continue;
       }
 
-      if (command === "BLINK") {
-        steps.push({ type: "blink", lineNumber });
-        return;
+      steps.push({
+        type: "eye",
+        name,
+        holdSeconds: Math.max(0, Number(hold) || 0),
+        lineNumber,
+      });
+      continue;
+    }
+
+    if (command === "GESTURE" || command === "BREACH") {
+      const [name, rawIntensity = "1"] = rest.split(/\s+/);
+      if (!VALID_GESTURES.has(name)) {
+        errors.push(
+          `Line ${lineNumber}: unknown gesture "${name || ""}". Try ${[
+            ...VALID_GESTURES,
+          ].join(", ")}.`
+        );
+        continue;
       }
 
-      if (command === "AUTOCHAOS") {
-        const value = rest.toUpperCase();
-        if (value !== "ON" && value !== "OFF") {
-          errors.push(`Line ${lineNumber}: AUTOCHAOS expects ON or OFF.`);
-          return;
-        }
-        steps.push({
-          type: "autoChaos",
-          enabled: value === "ON",
-          lineNumber,
-        });
-        return;
-      }
+      steps.push({
+        type: "gesture",
+        name,
+        intensity: clamp(Number(rawIntensity) || 1, 0.1, 1.35),
+        lineNumber,
+      });
+      continue;
+    }
 
-      if (command === "RESET") {
-        steps.push({ type: "reset", lineNumber });
-        return;
-      }
+    if (command === "WAIT") {
+      steps.push({
+        type: "wait",
+        durationMs: parseDuration(rest, 250),
+        lineNumber,
+      });
+      continue;
+    }
 
-      errors.push(
-        `Line ${lineNumber}: unknown command "${command}". Use SAY, EYE, GESTURE, WAIT, BEAT, BLINK, AUTOCHAOS, or RESET.`
-      );
-    });
+    if (command === "BEAT") {
+      steps.push({
+        type: "wait",
+        durationMs: parseDuration(rest, 180),
+        lineNumber,
+      });
+      continue;
+    }
+
+    if (command === "BLINK") {
+      steps.push({ type: "blink", lineNumber });
+      continue;
+    }
+
+    if (command === "AUTOCHAOS") {
+      const value = rest.toUpperCase();
+      if (value !== "ON" && value !== "OFF") {
+        errors.push(`Line ${lineNumber}: AUTOCHAOS expects ON or OFF.`);
+        continue;
+      }
+      steps.push({
+        type: "autoChaos",
+        enabled: value === "ON",
+        lineNumber,
+      });
+      continue;
+    }
+
+    if (command === "RESET") {
+      steps.push({ type: "reset", lineNumber });
+      continue;
+    }
+
+    errors.push(
+      `Line ${lineNumber}: unknown command "${command}". Use SAY, RANT...ENDRANT, EYE, GESTURE, WAIT, BEAT, BLINK, AUTOCHAOS, or RESET.`
+    );
+  }
 
   return { steps, errors };
 }
