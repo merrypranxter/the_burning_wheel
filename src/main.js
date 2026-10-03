@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { BurningWheel } from "./character/BurningWheel.js";
 import { ContainmentEngine } from "./character/ContainmentEngine.js";
 import { PerformanceEngine } from "./performance/PerformanceEngine.js";
+import { directDialogue } from "./performance/AutoDirector.js";
 import godRantSkit from "../skits/the-word-god-is-not-god.bwskit?raw";
 import { VoiceController } from "./voice/VoiceController.js";
 import "./style.css";
@@ -18,12 +19,17 @@ const voiceText = document.querySelector("#voice-text");
 const voiceSpeak = document.querySelector("#voice-speak");
 const voiceStop = document.querySelector("#voice-stop");
 const voiceStatus = document.querySelector("#voice-status");
+const voiceSpeed = document.querySelector("#voice-speed");
+const voiceSpeedValue = document.querySelector("#voice-speed-value");
 
 const skitScript = document.querySelector("#skit-script");
 const skitRun = document.querySelector("#skit-run");
 const skitStop = document.querySelector("#skit-stop");
 const skitStatus = document.querySelector("#skit-status");
 const skitLoadGodRant = document.querySelector("#skit-load-god-rant");
+const directorText = document.querySelector("#director-text");
+const directorBuild = document.querySelector("#director-build");
+const directorStatus = document.querySelector("#director-status");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#168cff");
@@ -115,6 +121,7 @@ const containment = new ContainmentEngine({
 const voice = new VoiceController({
   angel,
   containment,
+  playbackRate: 1.3,
   onState(state) {
     if (!voiceStatus) return;
 
@@ -184,6 +191,39 @@ function setLabOpen(open) {
 
 hudToggle?.addEventListener("click", () => {
   setLabOpen(controlLab?.classList.contains("is-collapsed"));
+});
+
+voiceSpeed?.addEventListener("input", () => {
+  const rate = Number(voiceSpeed.value);
+  voice.setPlaybackRate(rate);
+
+  if (voiceSpeedValue) {
+    voiceSpeedValue.textContent = `${rate.toFixed(2)}×`;
+  }
+});
+
+directorBuild?.addEventListener("click", () => {
+  const source = directorText?.value || "";
+  const directed = directDialogue(source, { title: "AUTO-DIRECTED BURNING WHEEL" });
+
+  if (!directed.script) {
+    if (directorStatus) {
+      directorStatus.textContent = "GIVE THE DIRECTOR SOME WORDS";
+      directorStatus.dataset.state = "error";
+    }
+    return;
+  }
+
+  if (skitScript) {
+    skitScript.value = directed.script;
+    skitScript.scrollTop = 0;
+  }
+
+  if (directorStatus) {
+    directorStatus.textContent =
+      `DIRECTED // ${directed.stats.chunks} LINES // ${directed.stats.gestures} GESTURES`;
+    directorStatus.dataset.state = "ready";
+  }
 });
 
 async function speakCurrentLine() {
