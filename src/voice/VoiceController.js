@@ -38,6 +38,8 @@ export class VoiceController {
     this.previousEnergy = 0;
     this.lastGestureAt = -Infinity;
     this.lastAccentAt = -Infinity;
+    this.lastSpeechBlinkAt = -Infinity;
+    this.accentIndex = 0;
     this.gestureIndex = 0;
     this.requestToken = 0;
     this.playbackResolvers = new Set();
@@ -225,6 +227,16 @@ export class VoiceController {
 
     if (accentHit) {
       this.angel?.punctuateSpeech(0.22 + Math.min(0.58, onset * 0.62));
+      this.accentIndex += 1;
+
+      if (
+        this.accentIndex % 4 === 0 &&
+        elapsed - this.lastSpeechBlinkAt > 1.7
+      ) {
+        this.angel?.blink(elapsed);
+        this.lastSpeechBlinkAt = elapsed;
+      }
+
       this.lastAccentAt = elapsed;
     }
 
