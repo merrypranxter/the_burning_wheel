@@ -222,8 +222,8 @@ export class HeavenBackdrop {
     this.skyTexture = makeSkyTexture();
     this.skyMaterial = new THREE.MeshBasicMaterial({
       map: this.skyTexture,
-      transparent: true,
-      opacity: 0.88,
+      transparent: false,
+      opacity: 1,
       depthTest: false,
       depthWrite: false,
       side: THREE.DoubleSide,
@@ -267,8 +267,8 @@ export class HeavenBackdrop {
       new THREE.MeshBasicMaterial({
         color: "#f6fdff",
         transparent: true,
-        opacity: 0.075,
-        depthTest: false,
+        opacity: 0.055,
+        depthTest: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       })
@@ -344,9 +344,9 @@ export class HeavenBackdrop {
     });
 
     this.horizon.material.opacity =
-      0.07 +
-      Math.max(0, Math.sin(elapsed * 0.16)) * 0.025 +
-      clamp(breach, 0, 1) * 0.035;
+      0.045 +
+      Math.max(0, Math.sin(elapsed * 0.16)) * 0.018 +
+      clamp(breach, 0, 1) * 0.02;
   }
 
   dispose() {
