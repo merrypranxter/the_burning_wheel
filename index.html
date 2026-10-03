@@ -21,7 +21,7 @@
         <div class="hud__chrome">
           <div class="hud__label">
             <strong>THE BURNING WHEEL</strong>
-            <span>JOB 18 // VOICE APERTURE</span>
+            <span>JOB 19 // DITHER MONSTER EXPORT</span>
           </div>
           <button
             id="hud-toggle"
@@ -224,11 +224,30 @@ AUTOCHAOS ON</textarea>
                 </select>
               </label>
 
+              <label class="export-field">
+                <span>LOOK</span>
+                <select id="export-look" aria-label="Video export look">
+                  <option value="dither-monster" selected>DITHER MONSTER</option>
+                  <option value="extra-fucked">EXTRA FUCKED</option>
+                  <option value="clean">CLEAN</option>
+                </select>
+              </label>
+
+              <label class="export-field">
+                <span>PIXEL SCALE</span>
+                <select id="export-internal-scale" aria-label="Internal pixel render scale">
+                  <option value="0.25">25%</option>
+                  <option value="0.33" selected>33%</option>
+                  <option value="0.50">50%</option>
+                  <option value="0.66">66%</option>
+                </select>
+              </label>
+
               <button id="export-skit" type="button">EXPORT SKIT</button>
               <a id="export-download" href="#" hidden>SAVE LAST VIDEO</a>
               <span id="export-status" role="status" aria-live="polite">EXPORT IDLE</span>
               <div class="export-help">
-                Runs the current SKIT and records only the stage + synchronized voice. Lab controls are not in the video.
+                Runs the current SKIT and records only the stage + synchronized voice. DITHER MONSTER keeps the crunchy low-res artifact inside the high-res file.
               </div>
             </div>
           </div>
