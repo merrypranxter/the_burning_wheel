@@ -51,6 +51,7 @@ const exportAspect = document.querySelector("#export-aspect");
 const exportResolution = document.querySelector("#export-resolution");
 const exportLook = document.querySelector("#export-look");
 const exportInternalScale = document.querySelector("#export-internal-scale");
+const exportFrameStyle = document.querySelector("#export-frame-style");
 const exportSkit = document.querySelector("#export-skit");
 const exportDownload = document.querySelector("#export-download");
 const exportStatus = document.querySelector("#export-status");
@@ -462,6 +463,7 @@ async function exportCurrentSkit() {
       resolution: Number(exportResolution?.value || 720),
       look: exportLook?.value || "dither-monster",
       internalScale: Number(exportInternalScale?.value || 0.33),
+      frameStyle: exportFrameStyle?.value || "none",
       frameRate: 30,
     });
 
