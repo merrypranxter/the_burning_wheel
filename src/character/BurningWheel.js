@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { buildWheelPanels } from "./WheelPanel.js";
 import { CoreEye } from "./CoreEye.js";
 import { WingManifestation } from "./WingManifestation.js";
+import { VoiceAperture } from "./VoiceAperture.js";
 
 const GOLD = "#ffc400";
 const GOLD_LIGHT = "#fff0a0";
@@ -222,6 +223,9 @@ export class BurningWheel {
     this.group.add(this.wings.group);
     this.group.add(this.body);
 
+    this.voiceAperture = new VoiceAperture();
+    this.group.add(this.voiceAperture.group);
+
     const coreParts = createCore();
     this.core = coreParts.group;
     this.eye = coreParts.eye;
@@ -329,6 +333,7 @@ export class BurningWheel {
     );
     this.eye.update(delta, elapsed, pointer);
     this.wings.update(delta, elapsed);
+    this.voiceAperture.update(delta, elapsed);
 
     this.voicePresence *= 0.9;
     this.speechEnergy *= this.speaking ? 0.94 : 0.84;
@@ -414,6 +419,7 @@ export class BurningWheel {
   setSpeaking(enabled = false) {
     this.speaking = Boolean(enabled);
     this.wings?.setSpeaking(this.speaking);
+    this.voiceAperture?.setSpeaking(this.speaking);
 
     if (this.speaking) {
       this.voicePresence = Math.max(this.voicePresence, 0.22);
@@ -427,6 +433,7 @@ export class BurningWheel {
     this.speechAccentDirection = this.speechPhraseIndex % 2 === 0 ? 1 : -1;
     this.speechPhraseIndex += 1;
     this.wings?.pulse(amount);
+    this.voiceAperture?.punctuate(amount, this.speechAccentDirection);
   }
 
   applyVoiceEnergy({ rms = 0, low = 0, high = 0, onset = 0 } = {}, elapsed = 0) {
@@ -438,6 +445,11 @@ export class BurningWheel {
     this.speechLow = Math.max(this.speechLow, bass);
     this.speechHigh = Math.max(this.speechHigh, edge);
     this.wings?.setVoiceEnergy({ rms: energy, high: edge });
+    this.voiceAperture?.setVoiceEnergy({
+      rms: energy,
+      low: bass,
+      high: edge,
+    });
 
     this.body.position.z += energy * 0.08;
     this.body.rotation.z += Math.sin(elapsed * 13.0) * edge * 0.018;
@@ -465,6 +477,10 @@ export class BurningWheel {
       this.eye.group.rotation.z +=
         this.speechAccentDirection * onset * 0.035;
     }
+  }
+
+  setVoiceApertureEnabled(enabled = true) {
+    this.voiceAperture?.setEnabled(enabled);
   }
 
   setWingGesture(name, intensity = 1, elapsed = 0) {
@@ -511,6 +527,7 @@ export class BurningWheel {
     this.setExpression("neutral", 0, 0);
     this.setSpeaking(false);
     this.wings?.reset();
+    this.voiceAperture?.reset();
     this.speechEnergy = 0;
     this.speechLow = 0;
     this.speechHigh = 0;
