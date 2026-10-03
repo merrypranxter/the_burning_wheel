@@ -49,6 +49,8 @@ const rantStatus = document.querySelector("#rant-status");
 
 const exportAspect = document.querySelector("#export-aspect");
 const exportResolution = document.querySelector("#export-resolution");
+const exportLook = document.querySelector("#export-look");
+const exportInternalScale = document.querySelector("#export-internal-scale");
 const exportSkit = document.querySelector("#export-skit");
 const exportDownload = document.querySelector("#export-download");
 const exportStatus = document.querySelector("#export-status");
@@ -458,6 +460,8 @@ async function exportCurrentSkit() {
     const result = await videoExporter.exportSkit(script, {
       aspect: exportAspect?.value || "16:9",
       resolution: Number(exportResolution?.value || 720),
+      look: exportLook?.value || "dither-monster",
+      internalScale: Number(exportInternalScale?.value || 0.33),
       frameRate: 30,
     });
 
@@ -472,8 +476,12 @@ async function exportCurrentSkit() {
       exportDownload.href = lastExportUrl;
       exportDownload.download = filename;
       exportDownload.hidden = false;
+      const lookLabel = String(result.look || "clean")
+        .replaceAll("-", " ")
+        .toUpperCase();
+
       exportDownload.textContent =
-        `SAVE LAST VIDEO // ${result.width}×${result.height}`;
+        `SAVE LAST VIDEO // ${result.width}×${result.height} // ${lookLabel}`;
     }
 
     // Desktop browsers generally honor this immediately. Mobile Safari may
