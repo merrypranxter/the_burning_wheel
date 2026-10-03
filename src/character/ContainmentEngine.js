@@ -168,6 +168,7 @@ export class ContainmentEngine {
 
     this.targetBreach = definition.breach * this.active.intensity;
     this.stage.dataset.containment = name;
+    this.angel.setWingGesture?.(name, this.active.intensity, elapsed);
 
     if (definition.depthError) {
       this.setDepthSabotage(true);
