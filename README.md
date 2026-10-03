@@ -257,21 +257,14 @@ Long rants are split only under the hood to stay below the existing 1200-charact
 Manual `SAY` commands still work. `RANT ... ENDRANT` is now the preferred generated-monologue format.
 
 ### Job 17 — Video export
-Add in-browser export of a performed skit to a finished video file.
 
-Required framing presets:
-- **9:16** portrait / phone
-- **16:9** landscape / laptop-screen style
-- **1:1** square
-- **4:3** landscape
-- **3:4** portrait
+Implemented. The lab now has an **EXPORT** bank with framing presets for **16:9 laptop**, **9:16 phone**, **1:1**, **4:3**, and **3:4**, plus **480p**, **720p**, and **1080p** output sizes.
 
-Required resolution presets:
-- **480p**
-- **720p**
-- **1080p**
+**EXPORT SKIT** first pre-generates the skit's ElevenLabs speech so network latency is not recorded as dead air, then temporarily reframes the Three.js camera for the requested aspect ratio and records the current SKIT from beginning to end. Portrait framing expands the world-space camera enough to keep the seraphic wing field inside the shot instead of simply cropping the desktop viewport.
 
-Export should capture the rendered stage plus synchronized Burning Wheel voice/performance, not the lab controls. The selected aspect ratio should reframe the stage rather than merely crop the existing viewport. The export UI should make aspect ratio and resolution explicit before rendering/recording.
+The exporter composites the WebGL stage and containment/glitch overlay into a dedicated recording canvas at 30 fps and combines it with the Web Audio voice track. Lab controls and the RESET button are not part of the video. On completion the app attempts an automatic browser save and also exposes a persistent **SAVE LAST VIDEO** link for browsers (especially mobile Safari) that require a direct user tap.
+
+Output dimensions use the selected resolution as the short/standard dimension: for example 16:9 720p is 1280×720, 9:16 720p is 720×1280, 4:3 720p is 960×720, and 3:4 720p is 720×960. The browser chooses MP4 when its MediaRecorder supports it and falls back to WebM otherwise.
 
 ### Later passes
 After Jobs 15–17: revisit the voice-aperture/impossible-mouth experiment, chaos/glory enhancement, and self-critique/directorial feedback layer.
