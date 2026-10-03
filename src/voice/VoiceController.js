@@ -2,6 +2,10 @@ function clamp01(value) {
   return Math.max(0, Math.min(1, value));
 }
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function averageRange(array, start, end) {
   const from = Math.max(0, Math.min(array.length, start));
   const to = Math.max(from + 1, Math.min(array.length, end));
@@ -87,6 +91,13 @@ export class VoiceController {
     this.playbackResolvers = new Set();
     this.continuousQueueActive = false;
     this.preparedSpeech = new Map();
+
+    // Safari/iOS can fire "ended" a fraction before the final decoded audio
+    // has completely cleared the Web Audio output pipeline. If we replace the
+    // media source immediately, the tail of a word/phrase can be chopped off.
+    // Keep a tiny handoff guard between speech blobs so every consonant exits
+    // before the next blob takes over.
+    this.speechTailGuardMs = 100;
 
     this.audio.addEventListener("play", () => {
       this.angel?.setSpeaking(true);
@@ -212,6 +223,29 @@ export class VoiceController {
     this.audio.currentTime = 0;
     this.audio.playbackRate = this.playbackRate;
 
+    // Give Safari a chance to attach/decode the new blob before playback.
+    // This prevents the first few milliseconds of a fresh phrase from being
+    // lost when we switch sources quickly.
+    if (this.audio.readyState < 2) {
+      await Promise.race([
+        new Promise((resolve) => {
+          const ready = () => {
+            this.audio.removeEventListener("loadeddata", ready);
+            this.audio.removeEventListener("canplay", ready);
+            resolve();
+          };
+
+          this.audio.addEventListener("loadeddata", ready, { once: true });
+          this.audio.addEventListener("canplay", ready, { once: true });
+        }),
+        wait(750),
+      ]);
+    }
+
+    if (token !== this.requestToken) {
+      return { cancelled: true };
+    }
+
     const ended = new Promise((resolve) => {
       const onEnded = () => {
         this.audio.removeEventListener("ended", onEnded);
@@ -222,7 +256,13 @@ export class VoiceController {
     });
 
     await this.audio.play();
-    return ended;
+    const result = await ended;
+
+    if (!result.cancelled && token === this.requestToken) {
+      await wait(this.speechTailGuardMs);
+    }
+
+    return result;
   }
 
   async speakContinuousAndWait(text) {
