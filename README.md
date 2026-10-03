@@ -268,3 +268,12 @@ Output dimensions use the selected resolution as the short/standard dimension: f
 
 ### Later passes
 After Jobs 15–17: revisit the voice-aperture/impossible-mouth experiment, chaos/glory enhancement, and self-critique/directorial feedback layer.
+
+
+### Job 18 — Voice aperture pass
+
+Implemented. The Burning Wheel now has a speech-only **impossible voice aperture** anchored to the performing body just below the central eye. It is deliberately not a normal human mouth: a dark oval void opens through nested gold/magenta iris rims, irregular pearl tooth-shards, a cyan/ultraviolet throat glow, and a bright center-line that changes with high-frequency vocal energy.
+
+The aperture is nearly absent when silent, opens and reshapes continuously with speech energy, reacts differently to bass versus high-frequency content, twists on emphatic syllables, and briefly manifests several tiny offset echo-apertures during stronger accents. Those satellite apertures are intentionally asymmetric and phase-shifted so the speech anatomy feels projected from more than one coordinate system.
+
+The projected center eye still renders above the aperture, so speech anatomy cannot obscure the character's main face. A **VOICE APERTURE: ON/OFF** control in the VOICE bank makes the experiment easy to compare without changing the underlying performance system.
