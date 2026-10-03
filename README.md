@@ -200,3 +200,12 @@ Persona voice is presentation, not evidence. The angel should distinguish script
 ## Visual polish backlog
 
 The ring-eye system is structurally correct but not visually final. Replace the current banner-like display treatment on many eye panels with round eyeball-like forms: visible white sclera + iris/pupil, closer to loose eyeballs embedded around the gold wheels. Preserve their independent tracking modes and panic behavior while changing the visual shell.
+
+
+### Job 11 — Presence pass
+
+The central eye now has two coordinated layers: the physical depth-aware eye and a subtle always-visible projected eye rendered above the wheel geometry. This keeps the character's face readable even when rings cross in front. The projection brightens during speech and priority states.
+
+The center eye is slightly larger and more organic: richer sclera shading, limbal ring, additional iris fibers, wet corneal highlights, and subtle voice-reactive dilation. Ring eye panels are now biased further toward actual eyeballs and their organic/LED variants have stronger sclera, iris, and highlight treatment.
+
+Character framing was also increased so The Burning Wheel occupies more of the stage on desktop and mobile.
