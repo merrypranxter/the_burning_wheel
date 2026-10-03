@@ -423,33 +423,42 @@ export class WheelPanel {
 
   drawLedEye(elapsed) {
     const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
     const blink = this.blinkAmount(elapsed);
-    const openness = this.panicActive ? 1.15 : 1 - blink * 0.95;
+    const openness = this.panicActive
+      ? 1
+      : clamp(1 - blink * 0.94, 0.08, 1);
 
-    this.clear("#020509");
+    ctx.clearRect(0, 0, w, h);
 
-    ctx.fillStyle = this.panicActive ? "#27102d" : "#151c23";
-    for (let x = 2; x < 48; x += 4) {
-      for (let y = 2; y < 28; y += 4) {
-        ctx.fillRect(x, y, 1, 1);
-      }
-    }
-
-    ctx.strokeStyle = this.panicActive ? "#ffffff" : this.color;
-    ctx.lineWidth = this.panicActive ? 3 : 2;
+    ctx.fillStyle = "#f6fbff";
     ctx.beginPath();
-    ctx.moveTo(5, 14);
-    ctx.quadraticCurveTo(24, 4 + 9 * (1 - openness), 43, 14);
-    ctx.quadraticCurveTo(24, 24 - 9 * (1 - openness), 5, 14);
+    ctx.ellipse(cx, cy, 12.5, Math.max(1.3, 12.5 * openness), 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = this.panicActive ? "#ff4fd8" : this.color;
+    ctx.lineWidth = 2;
     ctx.stroke();
 
-    if (openness > 0.18) {
-      const x = 24 + this.pupilX * 5.5;
-      const y = 14 + this.pupilY * 2.5;
-      ctx.fillStyle = this.panicActive ? "#ff4fd8" : this.color;
-      ctx.fillRect(Math.round(x - 3), Math.round(y - 3), 6, 6);
+    const irisX = cx + this.pupilX * 4.6;
+    const irisY = cy + this.pupilY * 4.0;
+
+    ctx.fillStyle = this.panicActive ? "#ff4fd8" : this.color;
+    ctx.beginPath();
+    ctx.arc(irisX, irisY, this.panicActive ? 6 : 5.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#070912";
+    ctx.beginPath();
+    ctx.arc(irisX, irisY, this.panicActive ? 2 : 2.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (openness > 0.2) {
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(Math.round(x - 1), Math.round(y - 1), 2, 2);
+      ctx.fillRect(Math.round(irisX - 2), Math.round(irisY - 3), 2, 2);
     }
   }
 
