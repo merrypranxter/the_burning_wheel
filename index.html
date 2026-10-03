@@ -21,7 +21,7 @@
         <div class="hud__chrome">
           <div class="hud__label">
             <strong>THE BURNING WHEEL</strong>
-            <span>JOB 08 // AUTO-DIRECTOR ONLINE</span>
+            <span>JOB 09 // BRAIN BRIDGE ONLINE</span>
           </div>
           <button
             id="hud-toggle"
@@ -93,6 +93,28 @@
                 />
                 <output id="voice-speed-value" for="voice-speed">1.30×</output>
               </label>
+            </div>
+          </div>
+
+          <div class="control-bank control-bank--brain">
+            <div class="control-bank__name">BRAIN</div>
+            <div class="brain-console">
+              <textarea
+                id="brain-prompt"
+                rows="4"
+                maxlength="2400"
+                spellcheck="true"
+                aria-label="Concept or question for The Burning Wheel"
+                placeholder="Give him a concept, question, or target. Example: Explain why humans confuse moral disgust with cosmic law."
+              ></textarea>
+              <select id="brain-preset" aria-label="Burning Wheel persona preset">
+                <option value="default">DEFAULT</option>
+                <option value="cosmic-roast">COSMIC ROAST</option>
+                <option value="oracle">ORACLE</option>
+                <option value="serious">SERIOUS</option>
+              </select>
+              <button id="brain-generate" type="button">THINK + DIRECT</button>
+              <span id="brain-status" role="status" aria-live="polite">BRAIN IDLE</span>
             </div>
           </div>
 
