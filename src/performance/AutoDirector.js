@@ -235,63 +235,45 @@ export function directDialogue(source, { title = "AUTO-DIRECTED RANT" } = {}) {
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
 
+  const speechText = paragraphs.join("\n");
+  const eye = chooseEye(speechText, 0);
+  const hold = 4 + ((hashString(speechText) % 20) / 10);
+  const gesture = chooseGesture(speechText, 0, 0);
+
   const lines = [
     `# ${title}`,
-    "# generated locally by AutoDirector — edit anything you hate",
+    "# generated locally by AutoDirector — continuous rant mode",
     "AUTOCHAOS OFF",
     "RESET",
+    `EYE ${eye} ${hold.toFixed(1)}`,
   ];
 
-  let globalIndex = 0;
   let gestureCount = 0;
   let severeCount = 0;
-  let severeCooldown = 0;
 
-  paragraphs.forEach((paragraph, paragraphIndex) => {
-    const chunks = chunkParagraph(paragraph);
+  if (gesture) {
+    lines.push(
+      `GESTURE ${gesture.name} ${gesture.intensity.toFixed(2)}`
+    );
+    gestureCount = 1;
+    severeCount = gesture.severe ? 1 : 0;
+  }
 
-    chunks.forEach((chunk, chunkIndex) => {
-      const eye = chooseEye(chunk, globalIndex);
-      const hold = 2 + ((hashString(chunk) % 15) / 10);
+  if (/\b(blink|look|stare|eye)\b/i.test(speechText)) {
+    lines.push("BLINK");
+  }
 
-      lines.push(`EYE ${eye} ${hold.toFixed(1)}`);
-
-      const gesture = chooseGesture(chunk, globalIndex, severeCooldown);
-      if (gesture) {
-        lines.push(
-          `GESTURE ${gesture.name} ${gesture.intensity.toFixed(2)}`
-        );
-        gestureCount += 1;
-
-        if (gesture.severe) {
-          severeCount += 1;
-          severeCooldown = 3;
-        }
-      }
-
-      if (/\b(blink|look|stare|eye)\b/i.test(chunk) && globalIndex % 3 === 0) {
-        lines.push("BLINK");
-      }
-
-      lines.push(`SAY ${chunk}`);
-
-      const paragraphBreak =
-        chunkIndex === chunks.length - 1 &&
-        paragraphIndex < paragraphs.length - 1;
-
-      lines.push(`BEAT ${chooseBeat(chunk, paragraphBreak)}ms`);
-
-      severeCooldown = Math.max(0, severeCooldown - 1);
-      globalIndex += 1;
-    });
-  });
+  // RANT is a readable multiline block in the skit editor, but the voice
+  // controller flattens it and prefetches hidden TTS chunks before playback.
+  // Result: one continuous delivery instead of paragraph-by-paragraph dead air.
+  lines.push("RANT", ...paragraphs, "ENDRANT");
 
   lines.push("EYE neutral 0", "AUTOCHAOS ON");
 
   return {
     script: lines.join("\n"),
     stats: {
-      chunks: globalIndex,
+      chunks: 1,
       gestures: gestureCount,
       severeGestures: severeCount,
     },
