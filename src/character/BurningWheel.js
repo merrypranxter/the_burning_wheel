@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { buildWheelPanels } from "./WheelPanel.js";
 import { CoreEye } from "./CoreEye.js";
+import { WingManifestation } from "./WingManifestation.js";
 
 const GOLD = "#ffc400";
 const GOLD_LIGHT = "#fff0a0";
@@ -216,6 +217,9 @@ export class BurningWheel {
 
     this.body = new THREE.Group();
     this.body.name = "body";
+
+    this.wings = new WingManifestation();
+    this.group.add(this.wings.group);
     this.group.add(this.body);
 
     const coreParts = createCore();
@@ -324,6 +328,7 @@ export class BurningWheel {
       this.speechAccent * 0.045
     );
     this.eye.update(delta, elapsed, pointer);
+    this.wings.update(delta, elapsed);
 
     this.voicePresence *= 0.9;
     this.speechEnergy *= this.speaking ? 0.94 : 0.84;
@@ -408,6 +413,7 @@ export class BurningWheel {
 
   setSpeaking(enabled = false) {
     this.speaking = Boolean(enabled);
+    this.wings?.setSpeaking(this.speaking);
 
     if (this.speaking) {
       this.voicePresence = Math.max(this.voicePresence, 0.22);
@@ -420,6 +426,7 @@ export class BurningWheel {
     this.speechAccent = Math.max(this.speechAccent, amount);
     this.speechAccentDirection = this.speechPhraseIndex % 2 === 0 ? 1 : -1;
     this.speechPhraseIndex += 1;
+    this.wings?.pulse(amount);
   }
 
   applyVoiceEnergy({ rms = 0, low = 0, high = 0, onset = 0 } = {}, elapsed = 0) {
@@ -430,6 +437,7 @@ export class BurningWheel {
     this.speechEnergy = Math.max(this.speechEnergy, energy);
     this.speechLow = Math.max(this.speechLow, bass);
     this.speechHigh = Math.max(this.speechHigh, edge);
+    this.wings?.setVoiceEnergy({ rms: energy, high: edge });
 
     this.body.position.z += energy * 0.08;
     this.body.rotation.z += Math.sin(elapsed * 13.0) * edge * 0.018;
@@ -457,6 +465,10 @@ export class BurningWheel {
       this.eye.group.rotation.z +=
         this.speechAccentDirection * onset * 0.035;
     }
+  }
+
+  setWingGesture(name, intensity = 1, elapsed = 0) {
+    this.wings?.manifestGesture(name, intensity, elapsed);
   }
 
   setExpression(name, holdSeconds = 1.8, elapsed = 0) {
@@ -498,6 +510,7 @@ export class BurningWheel {
 
     this.setExpression("neutral", 0, 0);
     this.setSpeaking(false);
+    this.wings?.reset();
     this.speechEnergy = 0;
     this.speechLow = 0;
     this.speechHigh = 0;
