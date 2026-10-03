@@ -12,13 +12,20 @@ function averageRange(array, start, end) {
 }
 
 export class VoiceController {
-  constructor({ angel, containment, onState = () => {} }) {
+  constructor({ angel, containment, onState = () => {}, playbackRate = 1.3 }) {
     this.angel = angel;
     this.containment = containment;
     this.onState = onState;
 
     this.audio = new Audio();
     this.audio.preload = "auto";
+    this.playbackRate = Math.max(0.6, Math.min(1.8, Number(playbackRate) || 1));
+    this.audio.playbackRate = this.playbackRate;
+    this.audio.defaultPlaybackRate = this.playbackRate;
+
+    if ("preservesPitch" in this.audio) {
+      this.audio.preservesPitch = true;
+    }
 
     this.context = null;
     this.source = null;
@@ -63,6 +70,12 @@ export class VoiceController {
     this.analyser.connect(this.context.destination);
   }
 
+  setPlaybackRate(rate = 1) {
+    this.playbackRate = Math.max(0.6, Math.min(1.8, Number(rate) || 1));
+    this.audio.playbackRate = this.playbackRate;
+    this.audio.defaultPlaybackRate = this.playbackRate;
+  }
+
   async speak(text) {
     const line = text.trim();
     if (!line) throw new Error("Give him something to say first.");
@@ -103,6 +116,7 @@ export class VoiceController {
     this.currentUrl = URL.createObjectURL(blob);
     this.audio.src = this.currentUrl;
     this.audio.currentTime = 0;
+    this.audio.playbackRate = this.playbackRate;
 
     await this.audio.play();
   }
