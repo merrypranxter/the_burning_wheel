@@ -277,3 +277,14 @@ Implemented. The Burning Wheel now has a speech-only **impossible voice aperture
 The aperture is nearly absent when silent, opens and reshapes continuously with speech energy, reacts differently to bass versus high-frequency content, twists on emphatic syllables, and briefly manifests several tiny offset echo-apertures during stronger accents. Those satellite apertures are intentionally asymmetric and phase-shifted so the speech anatomy feels projected from more than one coordinate system.
 
 The projected center eye still renders above the aperture, so speech anatomy cannot obscure the character's main face. A **VOICE APERTURE: ON/OFF** control in the VOICE bank makes the experiment easy to compare without changing the underlying performance system.
+
+
+### Job 19 — Dither monster export pass
+
+Implemented. Export no longer has to beautify the creature into a smooth high-resolution render. The EXPORT bank now defaults to **DITHER MONSTER**, with selectable **25% / 33% / 50% / 66% pixel scale** plus **CLEAN** and **EXTRA FUCKED** looks.
+
+For DITHER MONSTER, the Three.js scene itself is temporarily rendered at the selected low internal resolution while preserving the requested final aspect ratio. The WebGL stage and containment/glitch overlay are then composited together at that low resolution, pushed through a fixed 4×4 Bayer ordered-dither + palette-quantization pass, and finally scaled into the requested 480p/720p/1080p recording canvas with browser smoothing explicitly disabled.
+
+That means a 1080p file is now a high-resolution container for deliberately chunky source pixels rather than a newly polished 1080p angel. **33%** is the default internal scale and should stay close to the live site's busted-screenprint/browser-toy character.
+
+**EXTRA FUCKED** forces an even smaller 25% source, fewer color levels, heavier dithering, faint scanline darkening, and a tiny deterministic channel bias. **CLEAN** preserves the old full-resolution export path for comparison.
