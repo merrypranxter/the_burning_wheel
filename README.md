@@ -15,7 +15,7 @@ npm run dev
 
 Open the local Vite URL in a browser.
 
-### Current state — Job 09
+### Current state — Job 10
 
 The character now has a containment-failure / body-language engine on top of the existing nine-wheel body, independent eye/LED population, and expressive central eye.
 
@@ -37,6 +37,19 @@ The little ring eyes are no longer all using the same behavioral logic. Differen
 Frozen poses now protect central eye readability: rings may naturally pass in front of the face while moving, but pausing motion or entering the snapped phase of an orientation slip temporarily promotes the central eye above wheel depth so the final pose never lands with his face completely hidden.
 
 The containment engine also has low-frequency autonomous micro-events. Use **AUTO CHAOS** to disable them. **RESET REALITY** (or Escape) is deliberately kept outside the fake containment failure and restores the original geometry/UI.
+
+### Rant churner
+
+Job 10 adds a persistent rant seed bank intended to pair with Gemini Notebook (formerly NotebookLM). Paste a source-grounded report or seed bank into **RANTS**. Full seed packets can be separated with a line containing `---`; `//` or one seed per line also work.
+
+- **SAVE BANK** stores the bank in browser localStorage.
+- **CHURN ONE** picks one unused packet and remembers it.
+- **CHURN + THINK** picks a packet, sends it through the Burning Wheel brain, and runs the returned dialogue through AutoDirector.
+- **RESET HISTORY** clears only the used-seed history so the bank can cycle again.
+
+The churner will not repeat a seed until the entire bank has been used once. The recommended Gemini Notebook report prompt lives at `prompts/gemini-notebook-rant-churner.md`.
+
+Personal Gemini Notebook share links are human-facing rather than a direct app feed, so Job 10 uses copy/paste as the robust bridge. A later authenticated Google Drive bridge can remove that manual step by reading an exported Google Doc.
 
 ### Brain bridge
 
@@ -152,6 +165,7 @@ The repo is intentionally split into layers:
 - `src/voice/VoiceController.js` — ElevenLabs playback, Web Audio analysis, and body reaction to speech
 - `src/performance/PerformanceEngine.js` — parser and sequential skit runner
 - `src/performance/AutoDirector.js` — deterministic raw-dialogue-to-performance choreography
+- `src/rants/RantChurner.js` — persistent no-repeat rant seed bank
 - `src/brain/BrainController.js` — browser-side concept-to-dialogue client
 - `netlify/functions/brain.mts` — server-side Burning Wheel brain bridge
 
