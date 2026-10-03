@@ -37,12 +37,18 @@ export class VoiceController {
     this.energy = { rms: 0, low: 0, high: 0 };
     this.previousEnergy = 0;
     this.lastGestureAt = -Infinity;
+    this.lastAccentAt = -Infinity;
+    this.gestureIndex = 0;
     this.requestToken = 0;
     this.playbackResolvers = new Set();
 
-    this.audio.addEventListener("play", () => this.onState("speaking"));
+    this.audio.addEventListener("play", () => {
+      this.angel?.setSpeaking(true);
+      this.onState("speaking");
+    });
     this.audio.addEventListener("ended", () => this.finishPlayback());
     this.audio.addEventListener("pause", () => {
+      this.angel?.setSpeaking(false);
       if (!this.audio.ended && this.audio.currentTime > 0) {
         this.onState("paused");
       }
@@ -134,6 +140,7 @@ export class VoiceController {
     this.energy.low = 0;
     this.energy.high = 0;
     this.previousEnergy = 0;
+    this.angel?.setSpeaking(false);
     this.onState("idle");
   }
 
@@ -143,6 +150,7 @@ export class VoiceController {
     this.energy.low = 0;
     this.energy.high = 0;
     this.previousEnergy = 0;
+    this.angel?.setSpeaking(false);
     this.onState("idle");
     this.revokeCurrentUrl();
   }
@@ -210,19 +218,37 @@ export class VoiceController {
       elapsed
     );
 
+    const accentHit =
+      onset > 0.26 &&
+      scaledEnergy > 0.2 &&
+      elapsed - this.lastAccentAt > 0.48;
+
+    if (accentHit) {
+      this.angel?.punctuateSpeech(0.22 + Math.min(0.58, onset * 0.62));
+      this.lastAccentAt = elapsed;
+    }
+
     const phraseHit =
-      onset > 0.38 &&
-      scaledEnergy > 0.32 &&
-      elapsed - this.lastGestureAt > 3.2 &&
+      onset > 0.34 &&
+      scaledEnergy > 0.3 &&
+      elapsed - this.lastGestureAt > 2.15 &&
       !this.containment.active;
 
     if (phraseHit) {
-      const intensity = 0.28 + Math.min(0.5, scaledEnergy * 0.5);
-      const gesture =
-        this.energy.low > this.energy.high * 1.18
-          ? "judgment"
-          : "flare";
+      const intensity = 0.24 + Math.min(0.42, scaledEnergy * 0.42);
+      const bassDominant = this.energy.low > this.energy.high * 1.2;
+      const brightDominant = this.energy.high > this.energy.low * 1.16;
 
+      const quietGestures = bassDominant
+        ? ["judgment", "leanIn", "attractorDrift"]
+        : brightDominant
+          ? ["flare", "recoil", "leanIn"]
+          : ["leanIn", "judgment", "flare", "attractorDrift"];
+
+      const gesture =
+        quietGestures[this.gestureIndex % quietGestures.length];
+
+      this.gestureIndex += 1;
       this.containment.trigger(gesture, { intensity, elapsed });
       this.lastGestureAt = elapsed;
     }
