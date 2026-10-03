@@ -203,6 +203,12 @@ function createCore() {
   return { group, eye };
 }
 
+function wheelIndexParity(id = "") {
+  let total = 0;
+  for (let i = 0; i < id.length; i += 1) total += id.charCodeAt(i);
+  return total % 2 === 0;
+}
+
 export class BurningWheel {
   constructor({ wheelConfigs = DEFAULT_WHEELS } = {}) {
     this.group = new THREE.Group();
@@ -230,6 +236,16 @@ export class BurningWheel {
     this.pointerInfluence = new THREE.Vector2();
     this.baseScale = 1;
     this.voicePresence = 0;
+
+    // Speech performance state. The wheel should visibly "talk" even if the
+    // audio is muted: larger head/body phrasing rides on top of the analyzer.
+    this.speaking = false;
+    this.speechEnergy = 0;
+    this.speechLow = 0;
+    this.speechHigh = 0;
+    this.speechAccent = 0;
+    this.speechAccentDirection = 1;
+    this.speechPhraseIndex = 0;
   }
 
   update(delta, elapsed, pointer = { x: 0, y: 0 }) {
@@ -239,21 +255,81 @@ export class BurningWheel {
     const bob = Math.sin(elapsed * 1.16) * 0.075;
     const breath = 1 + Math.sin(elapsed * 0.83) * 0.012;
 
-    this.group.position.y = bob;
-    this.group.scale.setScalar(this.baseScale * breath);
+    const speechGate = this.speaking
+      ? Math.max(0.16, this.speechEnergy)
+      : this.speechEnergy * 0.45;
+    const phrasePulse =
+      Math.sin(elapsed * 5.1 + this.speechPhraseIndex * 0.73) * speechGate;
+    const fastPhrase =
+      Math.sin(elapsed * 9.7 + this.speechPhraseIndex * 1.31) * this.speechHigh;
+    const nod =
+      Math.sin(elapsed * 4.0 + 0.5) * this.speechLow * 0.10 +
+      this.speechAccent * 0.13;
+    const yaw =
+      Math.sin(elapsed * 2.35 + this.speechPhraseIndex * 0.41) *
+      speechGate *
+      0.14;
+    const roll =
+      fastPhrase * 0.055 +
+      this.speechAccent *
+        this.speechAccentDirection *
+        0.085;
 
-    this.body.position.set(0, 0, 0);
+    this.group.position.y =
+      bob +
+      (this.speaking ? Math.sin(elapsed * 3.4) * 0.025 * speechGate : 0);
+    this.group.position.x =
+      this.speaking
+        ? Math.sin(elapsed * 2.1 + this.speechPhraseIndex) *
+          0.045 *
+          speechGate
+        : 0;
+    this.group.scale.setScalar(
+      this.baseScale *
+        (breath + (this.speaking ? this.speechEnergy * 0.018 : 0))
+    );
+
+    this.body.position.set(
+      phrasePulse * 0.035,
+      -Math.abs(phrasePulse) * 0.018,
+      this.speechEnergy * 0.16 + this.speechAccent * 0.12
+    );
     this.body.rotation.y =
-      this.pointerInfluence.x * 0.10 + Math.sin(elapsed * 0.31) * 0.035;
+      this.pointerInfluence.x * 0.10 +
+      Math.sin(elapsed * 0.31) * 0.035 +
+      yaw;
     this.body.rotation.x =
-      -this.pointerInfluence.y * 0.075 + Math.cos(elapsed * 0.27) * 0.025;
-    this.body.rotation.z = Math.sin(elapsed * 0.21) * 0.022;
+      -this.pointerInfluence.y * 0.075 +
+      Math.cos(elapsed * 0.27) * 0.025 -
+      nod;
+    this.body.rotation.z =
+      Math.sin(elapsed * 0.21) * 0.022 + roll;
 
-    this.core.rotation.z = Math.sin(elapsed * 0.52) * 0.08;
-    this.core.scale.setScalar(1 + Math.sin(elapsed * 1.7) * 0.018);
+    this.core.rotation.z =
+      Math.sin(elapsed * 0.52) * 0.08 -
+      roll * 0.42 +
+      phrasePulse * 0.018;
+    this.core.rotation.x =
+      this.speaking
+        ? Math.sin(elapsed * 5.6 + 0.3) * this.speechEnergy * 0.045
+        : 0;
+    this.core.rotation.y =
+      this.speaking
+        ? Math.sin(elapsed * 3.2 + 1.1) * speechGate * 0.055
+        : 0;
+    this.core.scale.setScalar(
+      1 +
+      Math.sin(elapsed * 1.7) * 0.018 +
+      this.speechEnergy * 0.055 +
+      this.speechAccent * 0.045
+    );
     this.eye.update(delta, elapsed, pointer);
 
     this.voicePresence *= 0.9;
+    this.speechEnergy *= this.speaking ? 0.94 : 0.84;
+    this.speechLow *= this.speaking ? 0.93 : 0.82;
+    this.speechHigh *= this.speaking ? 0.9 : 0.78;
+    this.speechAccent *= 0.82;
     const projectionPulse =
       1 +
       Math.sin(elapsed * 1.7) * 0.018 +
@@ -280,26 +356,41 @@ export class BurningWheel {
       rotor.position.set(0, 0, 0);
       rotor.scale.set(1, 1, 1);
 
-      wheel.spinAngle += delta * config.spin;
+      const speechSpin =
+        this.speaking
+          ? (this.speechHigh * 0.42 + this.speechAccent * 0.28) *
+            (wheelIndexParity(config.id) ? 1 : -1)
+          : 0;
+
+      wheel.spinAngle += delta * (config.spin + speechSpin);
       rotor.rotation.set(0, 0, wheel.spinAngle);
 
       carrier.rotation.x =
         baseRotation.x +
         Math.sin(elapsed * config.precession[0] * 7 + config.phase) *
           config.wobble +
-        Math.sin(elapsed * 0.19 + config.phase) * config.precession[0];
+        Math.sin(elapsed * 0.19 + config.phase) * config.precession[0] +
+        Math.sin(elapsed * 3.1 + config.phase) *
+          this.speechEnergy *
+          0.035;
 
       carrier.rotation.y =
         baseRotation.y +
         Math.cos(elapsed * config.precession[1] * 7 + config.phase * 0.73) *
           config.wobble +
-        Math.sin(elapsed * 0.17 + config.phase) * config.precession[1];
+        Math.sin(elapsed * 0.17 + config.phase) * config.precession[1] +
+        Math.cos(elapsed * 2.6 + config.phase * 1.4) *
+          this.speechLow *
+          0.03;
 
       carrier.rotation.z =
         baseRotation.z +
         Math.sin(elapsed * config.precession[2] * 8 + config.phase * 1.17) *
           config.wobble +
-        Math.cos(elapsed * 0.23 + config.phase) * config.precession[2];
+        Math.cos(elapsed * 0.23 + config.phase) * config.precession[2] +
+        this.speechAccent *
+          this.speechAccentDirection *
+          (0.018 + config.radius * 0.006);
 
       for (const panel of wheel.panels) {
         panel.update(delta, elapsed, {
@@ -315,16 +406,40 @@ export class BurningWheel {
     this.group.scale.setScalar(scale);
   }
 
+  setSpeaking(enabled = false) {
+    this.speaking = Boolean(enabled);
+
+    if (this.speaking) {
+      this.voicePresence = Math.max(this.voicePresence, 0.22);
+      this.speechEnergy = Math.max(this.speechEnergy, 0.12);
+    }
+  }
+
+  punctuateSpeech(intensity = 0.5) {
+    const amount = Math.max(0, Math.min(1.2, Number(intensity) || 0));
+    this.speechAccent = Math.max(this.speechAccent, amount);
+    this.speechAccentDirection = this.speechPhraseIndex % 2 === 0 ? 1 : -1;
+    this.speechPhraseIndex += 1;
+  }
+
   applyVoiceEnergy({ rms = 0, low = 0, high = 0, onset = 0 } = {}, elapsed = 0) {
     const energy = Math.max(0, Math.min(1, rms));
     const bass = Math.max(0, Math.min(1, low));
     const edge = Math.max(0, Math.min(1, high));
 
-    this.body.position.z += energy * 0.13;
-    this.body.rotation.z += Math.sin(elapsed * 13.0) * edge * 0.024;
-    this.core.scale.multiplyScalar(1 + energy * 0.11 + bass * 0.035);
+    this.speechEnergy = Math.max(this.speechEnergy, energy);
+    this.speechLow = Math.max(this.speechLow, bass);
+    this.speechHigh = Math.max(this.speechHigh, edge);
+
+    this.body.position.z += energy * 0.08;
+    this.body.rotation.z += Math.sin(elapsed * 13.0) * edge * 0.018;
+    this.core.scale.multiplyScalar(1 + energy * 0.075 + bass * 0.025);
     this.voicePresence = Math.max(this.voicePresence, energy);
     this.eye?.setVoiceEnergy(energy);
+
+    if (onset > 0.48) {
+      this.punctuateSpeech(0.24 + onset * 0.36);
+    }
 
     this.wheels.forEach((wheel, index) => {
       const direction = index % 2 === 0 ? 1 : -1;
@@ -339,7 +454,8 @@ export class BurningWheel {
     });
 
     if (onset > 0.68) {
-      this.eye.group.rotation.z += (Math.random() - 0.5) * onset * 0.04;
+      this.eye.group.rotation.z +=
+        this.speechAccentDirection * onset * 0.035;
     }
   }
 
@@ -381,5 +497,10 @@ export class BurningWheel {
     }
 
     this.setExpression("neutral", 0, 0);
+    this.setSpeaking(false);
+    this.speechEnergy = 0;
+    this.speechLow = 0;
+    this.speechHigh = 0;
+    this.speechAccent = 0;
   }
 }
