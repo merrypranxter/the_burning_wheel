@@ -83,7 +83,7 @@ export class ContainmentEngine {
     this.motionButton = motionButton;
     this.resetButton = resetButton;
 
-    this.baseSky = new THREE.Color("#168cff");
+    this.baseSky = new THREE.Color("#5bb9f4");
     this.hotSky = new THREE.Color("#ff2fb7");
     this.toxicSky = new THREE.Color("#71ff37");
     this.cyanSky = new THREE.Color("#00e5ff");
