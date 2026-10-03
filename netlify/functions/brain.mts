@@ -6,13 +6,11 @@ declare const Netlify: {
 
 const MAX_PROMPT = 2400;
 
-// Cost guard: this endpoint is intentionally not allowed to drift upward into
-// Pro-tier models. Add another model here only after explicitly deciding its cost.
-const CHEAP_MODELS = new Set([
+// Cheap-only guard. This endpoint never calls a Pro model.
+const CHEAP_MODELS = [
+  "gemini-3.5-flash-lite",
   "gemini-3.1-flash-lite",
-]);
-
-const DEFAULT_MODEL = "gemini-3.1-flash-lite";
+];
 
 const PRESET_NOTES: Record<string, string> = {
   default:
@@ -73,8 +71,11 @@ Aim for roughly 120 to 550 words unless the user clearly asks for something shor
 Do genuine reasoning. Preserve uncertainty where facts are uncertain.
 `.trim();
 
-function jsonError(message: string, status: number) {
-  return Response.json({ error: message }, { status });
+function jsonError(message: string, status: number, detail?: string) {
+  return Response.json(
+    detail ? { error: message, detail } : { error: message },
+    { status }
+  );
 }
 
 function stripFence(value: string) {
@@ -85,7 +86,75 @@ function stripFence(value: string) {
     .trim();
 }
 
+function safeGoogleMessage(payload: any) {
+  const message = payload?.error?.message;
+  if (typeof message !== "string") return "";
+  return message
+    .replace(/AIza[0-9A-Za-z_-]+/g, "[redacted-key]")
+    .slice(0, 260);
+}
+
+async function callGemini({
+  apiKey,
+  model,
+  prompt,
+  preset,
+}: {
+  apiKey: string;
+  model: string;
+  prompt: string;
+  preset: string;
+}) {
+  const endpoint =
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+      model
+    )}:generateContent`;
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "x-goog-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      systemInstruction: {
+        parts: [
+          {
+            text: `${PERSONA}\n\nCURRENT PRESET: ${PRESET_NOTES[preset]}`,
+          },
+        ],
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: preset === "serious" ? 0.75 : 1.02,
+        maxOutputTokens: 1100,
+        thinkingConfig: {
+          thinkingLevel: "minimal",
+        },
+      },
+    }),
+  });
+
+  let payload: any = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  return { response, payload };
+}
+
 export default async function brain(request: Request) {
+  if (request.method !== "POST") {
+    return jsonError("Use POST for the brain endpoint.", 405);
+  }
+
   let payload: { prompt?: unknown; preset?: unknown };
 
   try {
@@ -113,118 +182,114 @@ export default async function brain(request: Request) {
   }
 
   const apiKey = Netlify.env.get("GEMINI_API_KEY");
-  const requestedModel = Netlify.env.get("GEMINI_MODEL") || DEFAULT_MODEL;
-  const model = CHEAP_MODELS.has(requestedModel)
-    ? requestedModel
-    : DEFAULT_MODEL;
 
   if (!apiKey) {
     return jsonError(
-      "The Burning Wheel's brain is not configured yet. Add GEMINI_API_KEY to the Netlify project environment.",
+      "The brain cannot see GEMINI_API_KEY yet. Save it in Netlify and redeploy.",
       503
     );
   }
 
-  const endpoint =
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-      model
-    )}:generateContent`;
+  const requested = Netlify.env.get("GEMINI_MODEL");
+  const candidates =
+    requested && CHEAP_MODELS.includes(requested)
+      ? [requested, ...CHEAP_MODELS.filter((m) => m !== requested)]
+      : CHEAP_MODELS;
 
-  let upstream: Response;
+  let lastStatus = 502;
+  let lastDetail = "";
 
-  try {
-    upstream = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "x-goog-api-key": apiKey,
-        "Content-Type": "application/json",
+  for (const model of candidates) {
+    let result;
+    try {
+      result = await callGemini({ apiKey, model, prompt, preset });
+    } catch {
+      lastStatus = 502;
+      lastDetail = "Could not reach Google's Gemini API.";
+      continue;
+    }
+
+    if (!result.response.ok) {
+      lastStatus = result.response.status;
+      lastDetail =
+        safeGoogleMessage(result.payload) ||
+        `Google returned HTTP ${result.response.status}.`;
+      continue;
+    }
+
+    const raw = result.payload?.candidates?.[0]?.content?.parts
+      ?.map((part: { text?: string }) => part.text || "")
+      .join("")
+      .trim();
+
+    if (!raw) {
+      lastStatus = 502;
+      lastDetail = "Gemini returned an empty response.";
+      continue;
+    }
+
+    let parsed: { title?: unknown; dialogue?: unknown };
+
+    try {
+      parsed = JSON.parse(stripFence(raw));
+    } catch {
+      lastStatus = 502;
+      lastDetail = "Gemini answered, but not in the expected JSON shape.";
+      continue;
+    }
+
+    const dialogue =
+      typeof parsed.dialogue === "string" ? parsed.dialogue.trim() : "";
+    const title =
+      typeof parsed.title === "string" && parsed.title.trim()
+        ? parsed.title.trim()
+        : "THE BURNING WHEEL";
+
+    if (!dialogue) {
+      lastStatus = 502;
+      lastDetail = "Gemini answered, but returned no dialogue.";
+      continue;
+    }
+
+    return Response.json(
+      {
+        title: title.slice(0, 120),
+        dialogue: dialogue.slice(0, 7000),
+        model,
+        preset,
+        costGuard: "flash-lite-only",
       },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text: `${PERSONA}\n\nCURRENT PRESET: ${PRESET_NOTES[preset]}`,
-            },
-          ],
+      {
+        headers: {
+          "Cache-Control": "no-store",
         },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: preset === "serious" ? 0.75 : 1.05,
-          maxOutputTokens: 1100,
-          responseMimeType: "application/json",
-          thinkingConfig: {
-            thinkingLevel: "minimal",
-          },
-        },
-      }),
-    });
-  } catch {
-    return jsonError("Could not reach the brain service.", 502);
-  }
-
-  if (!upstream.ok) {
-    return jsonError(
-      `Brain generation failed upstream (HTTP ${upstream.status}).`,
-      502
+      }
     );
   }
 
-  const result = await upstream.json();
-  const raw = result?.candidates?.[0]?.content?.parts
-    ?.map((part: { text?: string }) => part.text || "")
-    .join("")
-    .trim();
-
-  if (!raw) {
-    return jsonError("The brain returned an empty thought.", 502);
+  if (lastStatus === 401 || lastStatus === 403) {
+    return jsonError(
+      "Google rejected the Gemini API key or its project permissions.",
+      502,
+      lastDetail
+    );
   }
 
-  let parsed: { title?: unknown; dialogue?: unknown };
-
-  try {
-    parsed = JSON.parse(stripFence(raw));
-  } catch {
-    return jsonError("The brain returned malformed JSON.", 502);
+  if (lastStatus === 429) {
+    return jsonError(
+      "Gemini rate limit hit. Try again in a minute.",
+      429,
+      lastDetail
+    );
   }
 
-  const dialogue =
-    typeof parsed.dialogue === "string" ? parsed.dialogue.trim() : "";
-  const title =
-    typeof parsed.title === "string" && parsed.title.trim()
-      ? parsed.title.trim()
-      : "THE BURNING WHEEL";
-
-  if (!dialogue) {
-    return jsonError("The brain returned no dialogue.", 502);
-  }
-
-  return Response.json(
-    {
-      title: title.slice(0, 120),
-      dialogue: dialogue.slice(0, 7000),
-      model,
-      preset,
-      costGuard: "flash-lite-only",
-    },
-    {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    }
+  return jsonError(
+    "The cheap Gemini brain failed on both Flash-Lite models.",
+    502,
+    lastDetail
   );
 }
 
 export const config = {
   path: "/brain",
-  method: "POST",
-  rateLimit: {
-    windowLimit: 6,
-    windowSize: 60,
-    aggregateBy: ["ip", "domain"],
-  },
 };
