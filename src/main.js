@@ -4,6 +4,7 @@ import { BrainController } from "./brain/BrainController.js";
 import { ContainmentEngine } from "./character/ContainmentEngine.js";
 import { PerformanceEngine } from "./performance/PerformanceEngine.js";
 import { directDialogue } from "./performance/AutoDirector.js";
+import { RantChurner } from "./rants/RantChurner.js";
 import godRantSkit from "../skits/the-word-god-is-not-god.bwskit?raw";
 import { VoiceController } from "./voice/VoiceController.js";
 import "./style.css";
@@ -35,6 +36,13 @@ const brainPrompt = document.querySelector("#brain-prompt");
 const brainPreset = document.querySelector("#brain-preset");
 const brainGenerate = document.querySelector("#brain-generate");
 const brainStatus = document.querySelector("#brain-status");
+const rantBank = document.querySelector("#rant-bank");
+const rantCurrent = document.querySelector("#rant-current");
+const rantSave = document.querySelector("#rant-save");
+const rantChurn = document.querySelector("#rant-churn");
+const rantThink = document.querySelector("#rant-think");
+const rantReset = document.querySelector("#rant-reset");
+const rantStatus = document.querySelector("#rant-status");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#168cff");
@@ -143,6 +151,8 @@ const voice = new VoiceController({
   },
 });
 
+const rantChurner = new RantChurner();
+
 const brain = new BrainController({
   onState(state) {
     if (!brainStatus) return;
@@ -162,6 +172,43 @@ const brain = new BrainController({
     }
   },
 });
+
+if (rantBank) rantBank.value = rantChurner.bank;
+if (rantCurrent && rantChurner.current) {
+  rantCurrent.value = rantChurner.current;
+}
+
+async function generateAndDirectFromPrompt(prompt, preset = "default") {
+  const thought = await brain.generate(prompt, preset);
+  if (thought?.cancelled) return null;
+
+  if (directorText) {
+    directorText.value = thought.dialogue;
+  }
+
+  const directed = directDialogue(thought.dialogue, {
+    title: thought.title || "BRAIN-GENERATED BURNING WHEEL",
+  });
+
+  if (skitScript) {
+    skitScript.value = directed.script;
+    skitScript.scrollTop = 0;
+  }
+
+  if (directorStatus) {
+    directorStatus.textContent =
+      `DIRECTED // ${directed.stats.chunks} LINES // ${directed.stats.gestures} GESTURES`;
+    directorStatus.dataset.state = "ready";
+  }
+
+  if (brainStatus) {
+    brainStatus.textContent =
+      `READY // ${thought.model || "BRAIN"}`;
+    brainStatus.dataset.state = "ready";
+  }
+
+  return { thought, directed };
+}
 
 const pointer = new THREE.Vector2(0, 0);
 let motionEnabled = true;
@@ -232,39 +279,81 @@ brainGenerate?.addEventListener("click", async () => {
   const preset = brainPreset?.value || "default";
 
   try {
-    const thought = await brain.generate(prompt, preset);
-    if (thought?.cancelled) return;
-
-    if (directorText) {
-      directorText.value = thought.dialogue;
-    }
-
-    const directed = directDialogue(thought.dialogue, {
-      title: thought.title || "BRAIN-GENERATED BURNING WHEEL",
-    });
-
-    if (skitScript) {
-      skitScript.value = directed.script;
-      skitScript.scrollTop = 0;
-    }
-
-    if (directorStatus) {
-      directorStatus.textContent =
-        `DIRECTED // ${directed.stats.chunks} LINES // ${directed.stats.gestures} GESTURES`;
-      directorStatus.dataset.state = "ready";
-    }
-
-    if (brainStatus) {
-      brainStatus.textContent =
-        `READY // ${thought.model || "BRAIN"}`;
-      brainStatus.dataset.state = "ready";
-    }
+    await generateAndDirectFromPrompt(prompt, preset);
   } catch (error) {
     console.error(error);
     if (brainStatus) {
       brainStatus.textContent = error?.message || "BRAIN FAILURE";
       brainStatus.dataset.state = "error";
     }
+  }
+});
+
+rantSave?.addEventListener("click", () => {
+  rantChurner.setBank(rantBank?.value || "");
+  if (rantStatus) {
+    rantStatus.textContent = `SAVED // ${rantChurner.items.length} SEEDS`;
+    rantStatus.dataset.state = "ready";
+  }
+});
+
+function churnOne() {
+  rantChurner.setBank(rantBank?.value || "");
+  const result = rantChurner.churn();
+
+  if (!result.seed) {
+    if (rantStatus) {
+      rantStatus.textContent = "PASTE A SEED BANK FIRST";
+      rantStatus.dataset.state = "error";
+    }
+    return null;
+  }
+
+  if (rantCurrent) {
+    rantCurrent.value = result.seed;
+  }
+
+  if (rantStatus) {
+    rantStatus.textContent =
+      `CHURNED // ${result.remaining} LEFT${result.recycled ? " // RECYCLED" : ""}`;
+    rantStatus.dataset.state = "ready";
+  }
+
+  return result.seed;
+}
+
+rantChurn?.addEventListener("click", () => {
+  churnOne();
+});
+
+rantThink?.addEventListener("click", async () => {
+  const seed = churnOne();
+  if (!seed) return;
+
+  try {
+    const prompt = rantChurner.buildBrainPrompt(seed);
+    const preset = brainPreset?.value || "default";
+    await generateAndDirectFromPrompt(prompt, preset);
+
+    if (rantStatus) {
+      rantStatus.textContent = "RANT BUILT // READY TO REVIEW";
+      rantStatus.dataset.state = "ready";
+    }
+  } catch (error) {
+    console.error(error);
+    if (rantStatus) {
+      rantStatus.textContent = error?.message || "RANT FAILURE";
+      rantStatus.dataset.state = "error";
+    }
+  }
+});
+
+rantReset?.addEventListener("click", () => {
+  rantChurner.resetHistory();
+  if (rantCurrent) rantCurrent.value = "";
+  if (rantStatus) {
+    rantStatus.textContent = "HISTORY CLEARED";
+    rantStatus.dataset.state = "idle";
   }
 });
 
