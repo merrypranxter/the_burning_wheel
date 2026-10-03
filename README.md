@@ -15,7 +15,7 @@ npm run dev
 
 Open the local Vite URL in a browser.
 
-### Current state — Job 08
+### Current state — Job 09
 
 The character now has a containment-failure / body-language engine on top of the existing nine-wheel body, independent eye/LED population, and expressive central eye.
 
@@ -37,6 +37,12 @@ The little ring eyes are no longer all using the same behavioral logic. Differen
 Frozen poses now protect central eye readability: rings may naturally pass in front of the face while moving, but pausing motion or entering the snapped phase of an orientation slip temporarily promotes the central eye above wheel depth so the final pose never lands with his face completely hidden.
 
 The containment engine also has low-frequency autonomous micro-events. Use **AUTO CHAOS** to disable them. **RESET REALITY** (or Escape) is deliberately kept outside the fake containment failure and restores the original geometry/UI.
+
+### Brain bridge
+
+Job 09 adds a concept-to-rant layer above the AutoDirector. The BRAIN box sends a short idea or question to the server-side Burning Wheel brain, gets back spoken dialogue, and immediately converts that dialogue into an editable skit. It does not auto-perform, so voice credits are only spent when **PERFORM** is pressed.
+
+Available brain presets: default, cosmic-roast, oracle, and serious.
 
 ### Auto-director
 
@@ -146,6 +152,8 @@ The repo is intentionally split into layers:
 - `src/voice/VoiceController.js` — ElevenLabs playback, Web Audio analysis, and body reaction to speech
 - `src/performance/PerformanceEngine.js` — parser and sequential skit runner
 - `src/performance/AutoDirector.js` — deterministic raw-dialogue-to-performance choreography
+- `src/brain/BrainController.js` — browser-side concept-to-dialogue client
+- `netlify/functions/brain.mts` — server-side Burning Wheel brain bridge
 
 That separation is deliberate: dialogue/performance logic can call named character verbs later without having to know how the renderer produces them.
 
