@@ -218,3 +218,12 @@ The old block-cloud placeholder sky has been replaced with a procedural heavenly
 Clouds are generated in-browser from shaded radial masses, then their edges and color bodies are deliberately dithered/quantized so they sit between soft atmospheric realism and the project's low-resolution screenprint/game-console language. Layers drift at different speeds with slight pointer parallax and slow breathing, while remaining compatible with ContainmentEngine cloud jitter/collapse effects.
 
 The underlying scene sky is brighter and softer so containment flashes can still bleed through the translucent heaven texture.
+
+
+### Job 13 — Performance pass
+
+Speech now drives a dedicated acting layer instead of only adding tiny analyzer wiggles. When ElevenLabs audio is playing, The Burning Wheel visibly shifts into a speaking state with stronger core/head nods, yaw, roll, forward emphasis, lateral phrasing, ring counter-motion, and speech-reactive scale changes. The movement remains active even during quieter audio so the character still reads as speaking with the sound muted.
+
+Audio onsets create short deterministic body accents through `punctuateSpeech()`. Frequent accents stay local to the body while larger phrase hits rotate through restrained gestures such as lean-in, judgment, flare, recoil, and attractor drift. Severe containment failures are not automatically spammed by normal speech.
+
+The center eye now receives speech-timed blinks and subtle voice energy, while the projected eye brightens with vocal presence. Speech state begins on audio playback and ends cleanly on pause, stop, or completion.
