@@ -227,3 +227,10 @@ Speech now drives a dedicated acting layer instead of only adding tiny analyzer 
 Audio onsets create short deterministic body accents through `punctuateSpeech()`. Frequent accents stay local to the body while larger phrase hits rotate through restrained gestures such as lean-in, judgment, flare, recoil, and attractor drift. Severe containment failures are not automatically spammed by normal speech.
 
 The center eye now receives speech-timed blinks and subtle voice energy, while the projected eye brightens with vocal presence. Speech state begins on audio playback and ends cleanly on pause, stop, or completion.
+
+
+### Job 14 — Solidity pass
+
+The washed-out/fogged body was traced to the heaven gradient itself: the sky plane was translucent with depth testing disabled, so the transparent pass was compositing blue over the already-rendered angel. The sky is now fully opaque and rendered as a true background layer rather than an alpha veil.
+
+The horizon glow now depth-tests behind the model and has been reduced slightly, preserving atmosphere without bleaching the gold wheel structure or core. Clouds remain behind the angel and keep their dithered atmospheric behavior.
