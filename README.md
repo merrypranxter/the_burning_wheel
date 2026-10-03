@@ -288,3 +288,10 @@ For DITHER MONSTER, the Three.js scene itself is temporarily rendered at the sel
 That means a 1080p file is now a high-resolution container for deliberately chunky source pixels rather than a newly polished 1080p angel. **33%** is the default internal scale and should stay close to the live site's busted-screenprint/browser-toy character.
 
 **EXTRA FUCKED** forces an even smaller 25% source, fewer color levels, heavier dithering, faint scanline darkening, and a tiny deterministic channel bias. **CLEAN** preserves the old full-resolution export path for comparison.
+
+
+### Optional shitty gold export frame
+
+The EXPORT bank now has a **BORDER** option with **NONE** or **SHITTY GOLD FRAME**. The gold frame is drawn directly into the low-resolution export canvas before nearest-neighbor enlargement, so it inherits the same crunchy pixels as DITHER MONSTER instead of looking like a clean overlay pasted on top.
+
+The frame is intentionally thin: layered dark-gold / bright-gold rails, stepped corner ornaments, and sparse tiny inner ticks. It is loosely Renaissance/gilded in silhouette but deliberately looks like a bad digitized picture frame rather than polished museum ornament. It only appears in the exported video and does not change the live stage.
