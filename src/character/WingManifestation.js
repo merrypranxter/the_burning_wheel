@@ -18,14 +18,15 @@ const GESTURE_DURATION = {
   dimensionStutter: 0.86,
 };
 
+// Six wing clusters: a seraphic six-wing count, but projected around an
+// ophanim-like wheel body instead of attached as a normal bilateral pair.
 const CLUSTERS = [
   { id: "upper-left", x: -1.58, y: 0.72, z: -0.9, rot: 0.44, scale: 1.0, mirror: -1, feathers: 9, phase: 0.2 },
   { id: "upper-right", x: 1.52, y: 0.58, z: -0.96, rot: -0.36, scale: 0.96, mirror: 1, feathers: 8, phase: 1.1 },
   { id: "lower-left", x: -1.5, y: -0.88, z: -1.06, rot: -0.22, scale: 0.82, mirror: -1, feathers: 7, phase: 2.0 },
   { id: "lower-right", x: 1.62, y: -0.72, z: -1.14, rot: 0.27, scale: 0.86, mirror: 1, feathers: 8, phase: 2.8 },
   { id: "side-left-impossible", x: -2.0, y: 0.0, z: -1.22, rot: 1.42, scale: 0.7, mirror: -1, feathers: 6, phase: 3.7 },
-  { id: "side-right-impossible", x: 1.92, y: 0.18, z: -1.28, rot: -1.16, scale: 0.72, mirror: 1, feathers: 6, phase: 4.5 },
-  { id: "crown", x: 0.08, y: 1.78, z: -1.34, rot: 0.04, scale: 0.66, mirror: 1, feathers: 7, phase: 5.6, crown: true },
+  { id: "crown-impossible", x: 0.34, y: 1.76, z: -1.3, rot: -0.18, scale: 0.7, mirror: 1, feathers: 7, phase: 5.2, crown: true },
 ];
 
 function clamp(value, min, max) {
