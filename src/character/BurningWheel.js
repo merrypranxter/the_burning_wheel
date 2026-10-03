@@ -105,6 +105,50 @@ function createWheel(config, wheelIndex) {
   };
 }
 
+function createEyeProjection(eye) {
+  const group = new THREE.Group();
+  group.name = "core-eye-projection";
+
+  const glow = new THREE.Mesh(
+    new THREE.CircleGeometry(0.52, 32),
+    new THREE.MeshBasicMaterial({
+      color: "#77e9ff",
+      transparent: true,
+      opacity: 0.075,
+      depthTest: false,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    })
+  );
+  glow.position.z = 0.69;
+  glow.renderOrder = 14990;
+  group.add(glow);
+
+  const eyePlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.92, 0.69),
+    new THREE.MeshBasicMaterial({
+      map: eye.texture,
+      transparent: true,
+      opacity: 0.30,
+      depthTest: false,
+      depthWrite: false,
+      blending: THREE.NormalBlending,
+      side: THREE.DoubleSide,
+    })
+  );
+  eyePlane.position.z = 0.705;
+  eyePlane.renderOrder = 15000;
+  group.add(eyePlane);
+
+  return {
+    group,
+    glow,
+    eyePlane,
+    voiceEnergy: 0,
+  };
+}
+
 function createCore() {
   const group = new THREE.Group();
   group.name = "burning-wheel-core";
@@ -173,6 +217,11 @@ export class BurningWheel {
     this.eye = coreParts.eye;
     this.body.add(this.core);
 
+    // A camera-facing impossible projection keeps the central eye readable even
+    // when rotating wheel geometry crosses the physical face.
+    this.eyeProjection = createEyeProjection(this.eye);
+    this.group.add(this.eyeProjection.group);
+
     this.wheels = wheelConfigs.map((config, index) => createWheel(config, index));
     for (const wheel of this.wheels) {
       this.body.add(wheel.carrier);
@@ -180,6 +229,7 @@ export class BurningWheel {
 
     this.pointerInfluence = new THREE.Vector2();
     this.baseScale = 1;
+    this.voicePresence = 0;
   }
 
   update(delta, elapsed, pointer = { x: 0, y: 0 }) {
@@ -202,6 +252,25 @@ export class BurningWheel {
     this.core.rotation.z = Math.sin(elapsed * 0.52) * 0.08;
     this.core.scale.setScalar(1 + Math.sin(elapsed * 1.7) * 0.018);
     this.eye.update(delta, elapsed, pointer);
+
+    this.voicePresence *= 0.9;
+    const projectionPulse =
+      1 +
+      Math.sin(elapsed * 1.7) * 0.018 +
+      this.voicePresence * 0.055;
+
+    this.eyeProjection.group.rotation.z =
+      this.eye.group.rotation.z * 0.28 +
+      Math.sin(elapsed * 0.37) * 0.008;
+    this.eyeProjection.group.scale.setScalar(projectionPulse);
+    this.eyeProjection.eyePlane.material.opacity =
+      0.24 +
+      this.voicePresence * 0.24 +
+      (this.eye.currentExpression === "wide" ? 0.08 : 0);
+    this.eyeProjection.glow.material.opacity =
+      0.055 +
+      this.voicePresence * 0.16 +
+      Math.max(0, Math.sin(elapsed * 1.4)) * 0.025;
 
     for (const wheel of this.wheels) {
       const { config, carrier, rotor, baseRotation } = wheel;
@@ -254,6 +323,8 @@ export class BurningWheel {
     this.body.position.z += energy * 0.13;
     this.body.rotation.z += Math.sin(elapsed * 13.0) * edge * 0.024;
     this.core.scale.multiplyScalar(1 + energy * 0.11 + bass * 0.035);
+    this.voicePresence = Math.max(this.voicePresence, energy);
+    this.eye?.setVoiceEnergy(energy);
 
     this.wheels.forEach((wheel, index) => {
       const direction = index % 2 === 0 ? 1 : -1;
@@ -278,6 +349,11 @@ export class BurningWheel {
 
   setEyeForegroundPriority(enabled, reason = "manual") {
     this.eye?.setForegroundPriority(enabled, reason);
+
+    if (this.eyeProjection) {
+      this.eyeProjection.eyePlane.material.opacity = enabled ? 0.58 : 0.3;
+      this.eyeProjection.glow.material.opacity = enabled ? 0.18 : 0.075;
+    }
   }
 
   blink(elapsed = 0) {
