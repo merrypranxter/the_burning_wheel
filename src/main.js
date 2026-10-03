@@ -8,6 +8,7 @@ import { RantChurner } from "./rants/RantChurner.js";
 import godRantSkit from "../skits/the-word-god-is-not-god.bwskit?raw";
 import { VoiceController } from "./voice/VoiceController.js";
 import { HeavenBackdrop } from "./visual/HeavenBackdrop.js";
+import { VideoExporter } from "./export/VideoExporter.js";
 import "./style.css";
 
 const stage = document.querySelector("#stage");
@@ -44,6 +45,12 @@ const rantChurn = document.querySelector("#rant-churn");
 const rantThink = document.querySelector("#rant-think");
 const rantReset = document.querySelector("#rant-reset");
 const rantStatus = document.querySelector("#rant-status");
+
+const exportAspect = document.querySelector("#export-aspect");
+const exportResolution = document.querySelector("#export-resolution");
+const exportSkit = document.querySelector("#export-skit");
+const exportDownload = document.querySelector("#export-download");
+const exportStatus = document.querySelector("#export-status");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#5bb9f4");
@@ -218,6 +225,35 @@ const performanceEngine = new PerformanceEngine({
   },
 });
 
+let lastExportUrl = null;
+
+const videoExporter = new VideoExporter({
+  renderer,
+  containment,
+  voice,
+  performanceEngine,
+  setExportViewport,
+  restoreViewport,
+  onState(state, detail = "") {
+    if (!exportStatus) return;
+
+    const labels = {
+      idle: "EXPORT IDLE",
+      preparing: "PREPARING...",
+      framing: "REFRAMING...",
+      recording: "RECORDING...",
+      ready: "VIDEO READY",
+      complete: "VIDEO READY",
+      error: "EXPORT ERROR",
+    };
+
+    exportStatus.textContent = detail
+      ? `${labels[state] || state.toUpperCase()} // ${detail}`
+      : labels[state] || state.toUpperCase();
+    exportStatus.dataset.state = state;
+  },
+});
+
 function setLabOpen(open) {
   if (!controlLab || !hudToggle) return;
 
@@ -378,6 +414,83 @@ async function runSkit() {
     console.error(error);
   }
 }
+
+function exportFilename(result) {
+  const ratio = String(result.aspect || "video").replace(":", "x");
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-")
+    .replace("T", "_")
+    .replace("Z", "");
+
+  return `burning-wheel_${ratio}_${result.resolution}p_${stamp}.${result.extension}`;
+}
+
+async function exportCurrentSkit() {
+  const script = skitScript?.value || "";
+
+  if (!script.trim()) {
+    if (exportStatus) {
+      exportStatus.textContent = "EXPORT ERROR // GIVE HIM A SKIT FIRST";
+      exportStatus.dataset.state = "error";
+    }
+    return;
+  }
+
+  try {
+    exportSkit?.setAttribute("disabled", "");
+    exportSkit && (exportSkit.textContent = "EXPORTING...");
+    setLabOpen(false);
+
+    const result = await videoExporter.exportSkit(script, {
+      aspect: exportAspect?.value || "16:9",
+      resolution: Number(exportResolution?.value || 720),
+      frameRate: 30,
+    });
+
+    if (lastExportUrl) {
+      URL.revokeObjectURL(lastExportUrl);
+    }
+
+    lastExportUrl = URL.createObjectURL(result.blob);
+    const filename = exportFilename(result);
+
+    if (exportDownload) {
+      exportDownload.href = lastExportUrl;
+      exportDownload.download = filename;
+      exportDownload.hidden = false;
+      exportDownload.textContent =
+        `SAVE LAST VIDEO // ${result.width}×${result.height}`;
+    }
+
+    // Desktop browsers generally honor this immediately. Mobile Safari may
+    // require the visible SAVE LAST VIDEO link, which remains available.
+    const autoSave = document.createElement("a");
+    autoSave.href = lastExportUrl;
+    autoSave.download = filename;
+    autoSave.style.display = "none";
+    document.body.appendChild(autoSave);
+    autoSave.click();
+    autoSave.remove();
+
+    setLabOpen(true);
+  } catch (error) {
+    console.error(error);
+
+    if (exportStatus) {
+      exportStatus.textContent =
+        `EXPORT ERROR // ${error?.message || "VIDEO FAILED"}`;
+      exportStatus.dataset.state = "error";
+    }
+
+    setLabOpen(true);
+  } finally {
+    exportSkit?.removeAttribute("disabled");
+    if (exportSkit) exportSkit.textContent = "EXPORT SKIT";
+  }
+}
+
+exportSkit?.addEventListener("click", exportCurrentSkit);
 
 voiceSpeak?.addEventListener("click", speakCurrentLine);
 voiceStop?.addEventListener("click", () => {
@@ -559,26 +672,20 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-function resize() {
-  const aspect = Math.max(window.innerWidth / window.innerHeight, 0.25);
-  const halfHeight = 3.15;
-  const halfWidth = halfHeight * aspect;
+let exportViewportActive = false;
 
+function applyStageViewport({
+  renderWidth,
+  renderHeight,
+  halfWidth,
+  halfHeight,
+  characterScale,
+}) {
   camera.left = -halfWidth;
   camera.right = halfWidth;
   camera.top = halfHeight;
   camera.bottom = -halfHeight;
   camera.updateProjectionMatrix();
-
-  const divisor = window.innerWidth < 700 ? 3.2 : 4.2;
-  const renderWidth = Math.max(
-    150,
-    Math.round(window.innerWidth / divisor)
-  );
-  const renderHeight = Math.max(
-    150,
-    Math.round(window.innerHeight / divisor)
-  );
 
   renderer.setSize(renderWidth, renderHeight, false);
   containment.resizeOverlay();
@@ -592,10 +699,64 @@ function resize() {
     rotation: cloud.rotation.clone(),
   }));
 
-  const characterScale = window.innerWidth < 520 ? 0.92 : 1.08;
   angel.setBaseScale(characterScale);
 }
 
+function setExportViewport(width, height) {
+  exportViewportActive = true;
+  stage.dataset.exporting = "true";
+
+  const aspect = Math.max(width / height, 0.25);
+  let halfHeight = 3.15;
+  let halfWidth = halfHeight * aspect;
+
+  // Tall video needs extra world-space width or the seraphic wing field gets
+  // cropped. Expand the camera vertically instead of shrinking the creature.
+  if (halfWidth < 2.85) {
+    halfWidth = 2.85;
+    halfHeight = halfWidth / aspect;
+  }
+
+  applyStageViewport({
+    renderWidth: width,
+    renderHeight: height,
+    halfWidth,
+    halfHeight,
+    characterScale: 1.06,
+  });
+}
+
+function restoreViewport() {
+  exportViewportActive = false;
+  delete stage.dataset.exporting;
+  resize();
+}
+
+function resize() {
+  if (exportViewportActive) return;
+
+  const aspect = Math.max(window.innerWidth / window.innerHeight, 0.25);
+  const halfHeight = 3.15;
+  const halfWidth = halfHeight * aspect;
+
+  const divisor = window.innerWidth < 700 ? 3.2 : 4.2;
+  const renderWidth = Math.max(
+    150,
+    Math.round(window.innerWidth / divisor)
+  );
+  const renderHeight = Math.max(
+    150,
+    Math.round(window.innerHeight / divisor)
+  );
+
+  applyStageViewport({
+    renderWidth,
+    renderHeight,
+    halfWidth,
+    halfHeight,
+    characterScale: window.innerWidth < 520 ? 0.92 : 1.08,
+  });
+}
 window.addEventListener("resize", resize);
 resize();
 
@@ -626,6 +787,7 @@ function animate(now) {
 
   renderer.render(scene, camera);
   containment.afterRender(elapsed);
+  videoExporter.captureFrame();
 }
 
 window.addEventListener("beforeunload", () => {
@@ -633,6 +795,10 @@ window.addEventListener("beforeunload", () => {
   performanceEngine.stop({ silent: true });
   voice.dispose();
   heaven.dispose();
+
+  if (lastExportUrl) {
+    URL.revokeObjectURL(lastExportUrl);
+  }
 });
 
 requestAnimationFrame(animate);
