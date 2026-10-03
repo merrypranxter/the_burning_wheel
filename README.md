@@ -241,7 +241,12 @@ The horizon glow now depth-tests behind the model and has been reduced slightly,
 The next passes are deliberately prioritized around **making finished performances easy to watch and export**, not just adding more ornament.
 
 ### Job 15 — Wing manifestation pass
-Add multiple biblically weird, non-Euclidean wing clusters behind and around the main wheel body. Wings must never obscure the central eye or speaking core. They should react to speech/gestures and feel spatially impossible rather than like a normal left/right bird-wing pair.
+
+Implemented. The Burning Wheel now carries **six seraphic wing clusters** arranged around the ophanim-like body instead of as a normal left/right pair. The six-wing count is intentional, while the placement is deliberately asymmetric and non-Euclidean.
+
+The wing system lives in `src/character/WingManifestation.js`. White/pearl/warm-gold feather fans sit behind the main wheel body, so they enlarge the silhouette without covering the center eye or speaking core. Clusters breathe and flex at idle, react to voice energy and speech accents, and receive gesture-specific behavior from ContainmentEngine: lean-in tucks, recoil asymmetry, judgment sharpening, flare expansion, attractor drift, projection/orientation slippage, Möbius twisting, and dimension stutter.
+
+The wings remain materially readable rather than ghost-only: most feather planes are near-opaque and depth-tested behind the body.
 
 ### Job 16 — Continuous rant speech pass
 Fix the long dead air between generated paragraphs. Brain/rant output should be normalized into **one continuous spoken rant** before TTS: preserve paragraph boundaries as simple line breaks for readability in the editor, but do not split them into separate voice requests with long waits between each paragraph. The goal is one continuous delivery with natural sentence/paragraph cadence instead of multiple disconnected utterances.
