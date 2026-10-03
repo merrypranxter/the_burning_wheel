@@ -185,11 +185,20 @@ export class WheelPanel {
 
     const width = clamp(tube * 3.25, 0.20, 0.34);
     const height = clamp(tube * 1.85, 0.12, 0.21);
+    const orbRadius = clamp(tube * 1.48, 0.105, 0.17);
+
+    const bezelGeometry = this.isEyeball
+      ? new THREE.CircleGeometry(orbRadius * 1.18, 12)
+      : new THREE.PlaneGeometry(width * 1.18, height * 1.25);
+
+    const screenGeometry = this.isEyeball
+      ? new THREE.CircleGeometry(orbRadius, 12)
+      : new THREE.PlaneGeometry(width, height);
 
     const bezel = new THREE.Mesh(
-      new THREE.PlaneGeometry(width * 1.18, height * 1.25),
+      bezelGeometry,
       new THREE.MeshBasicMaterial({
-        color: "#4a2b00",
+        color: this.isEyeball ? "#7b4a00" : "#4a2b00",
         side: THREE.DoubleSide,
       })
     );
@@ -197,9 +206,10 @@ export class WheelPanel {
     this.group.add(bezel);
 
     this.screen = new THREE.Mesh(
-      new THREE.PlaneGeometry(width, height),
+      screenGeometry,
       new THREE.MeshBasicMaterial({
         map: this.texture,
+        transparent: this.isEyeball,
         side: THREE.DoubleSide,
       })
     );
