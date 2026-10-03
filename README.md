@@ -15,7 +15,7 @@ npm run dev
 
 Open the local Vite URL in a browser.
 
-### Current state — Job 07
+### Current state — Job 08
 
 The character now has a containment-failure / body-language engine on top of the existing nine-wheel body, independent eye/LED population, and expressive central eye.
 
@@ -37,6 +37,14 @@ The little ring eyes are no longer all using the same behavioral logic. Differen
 Frozen poses now protect central eye readability: rings may naturally pass in front of the face while moving, but pausing motion or entering the snapped phase of an orientation slip temporarily promotes the central eye above wheel depth so the final pose never lands with his face completely hidden.
 
 The containment engine also has low-frequency autonomous micro-events. Use **AUTO CHAOS** to disable them. **RESET REALITY** (or Escape) is deliberately kept outside the fake containment failure and restores the original geometry/UI.
+
+### Auto-director
+
+Job 08 adds a local deterministic director on top of the skit language. Paste raw dialogue into the DIRECT box and press **DIRECT THIS**. The browser breaks the monologue into ElevenLabs-sized chunks, chooses eye expressions, gestures, containment effects, and pauses from semantic/punctuation cues, and writes an editable `.bwskit` into the SKIT editor.
+
+The director deliberately throttles severe containment failures so every sentence does not become a dimension stutter. The same raw text produces the same choreography, which makes it useful for repeatable video takes while still leaving the generated script editable.
+
+The voice now defaults to **1.30× playback**, matching the current preferred delivery speed. A small VOICE speed slider can move it from 0.80× to 1.50× without regenerating the ElevenLabs audio.
 
 ### Little skit machine
 
@@ -137,6 +145,7 @@ The repo is intentionally split into layers:
 - `src/character/ContainmentEngine.js` — gestures, impossible geometry, DOM infection, depth-buffer sabotage, historical-frame smear, and containment state
 - `src/voice/VoiceController.js` — ElevenLabs playback, Web Audio analysis, and body reaction to speech
 - `src/performance/PerformanceEngine.js` — parser and sequential skit runner
+- `src/performance/AutoDirector.js` — deterministic raw-dialogue-to-performance choreography
 
 That separation is deliberate: dialogue/performance logic can call named character verbs later without having to know how the renderer produces them.
 
