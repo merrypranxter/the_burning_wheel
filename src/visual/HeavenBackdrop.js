@@ -329,15 +329,14 @@ export class HeavenBackdrop {
       mesh.position.x = floatX + pointerDriftX;
       mesh.position.y = floatY + pointerDriftY;
 
-      const breathe = 1 + Math.sin(elapsed * 0.11 + layout.phase) * 0.014;
-      mesh.scale.x *= breathe;
-      mesh.scale.y *= 1 + Math.cos(elapsed * 0.09 + layout.phase) * 0.009;
-
-      // Undo the multiplicative breathing every frame so scale cannot drift.
       const width = Math.max(1.5, this.halfWidth * layout.width);
       const height = Math.max(0.55, this.halfHeight * layout.height);
-      mesh.scale.x += (width - mesh.scale.x) * 0.2;
-      mesh.scale.y += (height - mesh.scale.y) * 0.2;
+      const breatheX =
+        1 + Math.sin(elapsed * 0.11 + layout.phase) * 0.014;
+      const breatheY =
+        1 + Math.cos(elapsed * 0.09 + layout.phase) * 0.009;
+
+      mesh.scale.set(width * breatheX, height * breatheY, 1);
 
       mesh.material.opacity =
         layout.opacity *
