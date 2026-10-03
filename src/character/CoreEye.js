@@ -139,11 +139,12 @@ export class CoreEye {
     this.group.name = "core-eye";
 
     this.screen = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.76, 0.57),
+      new THREE.PlaneGeometry(0.88, 0.66),
       new THREE.MeshBasicMaterial({
         map: this.texture,
         transparent: true,
         depthTest: true,
+        depthWrite: false,
         side: THREE.DoubleSide,
       })
     );
@@ -174,6 +175,7 @@ export class CoreEye {
     this.nextSaccadeAt = 0.8;
 
     this.randomState = 0x0f4a9b31;
+    this.voiceEnergy = 0;
 
     this.draw(0, 0);
   }
@@ -207,6 +209,10 @@ export class CoreEye {
     }
 
     this.screen.material.needsUpdate = true;
+  }
+
+  setVoiceEnergy(energy = 0) {
+    this.voiceEnergy = clamp(Number(energy) || 0, 0, 1);
   }
 
   setExpression(name = "neutral", holdSeconds = 1.8, elapsed = 0) {
@@ -270,9 +276,18 @@ export class CoreEye {
     const blink = this.blinkAmount(elapsed);
     this.draw(elapsed, blink);
 
+    this.voiceEnergy *= 0.9;
+
     this.group.rotation.z =
-      Math.sin(elapsed * 0.63) * 0.012 + this.current.lidTilt * 0.025;
-    this.group.scale.setScalar(1 + Math.sin(elapsed * 1.4) * 0.006);
+      Math.sin(elapsed * 0.63) * 0.012 +
+      this.current.lidTilt * 0.025 +
+      Math.sin(elapsed * 9.5) * this.voiceEnergy * 0.006;
+
+    this.group.scale.setScalar(
+      1 +
+      Math.sin(elapsed * 1.4) * 0.006 +
+      this.voiceEnergy * 0.018
+    );
 
     void delta;
   }
@@ -305,7 +320,19 @@ export class CoreEye {
     eyePath(ctx, cx, cy, halfWidth, halfHeight, lidTilt);
     ctx.clip();
 
-    ctx.fillStyle = "#fff8e9";
+    const scleraGradient = ctx.createRadialGradient(
+      cx - 8,
+      cy - 7,
+      3,
+      cx,
+      cy,
+      45
+    );
+    scleraGradient.addColorStop(0, "#fffef8");
+    scleraGradient.addColorStop(0.55, "#fff8ea");
+    scleraGradient.addColorStop(0.82, "#eadfd4");
+    scleraGradient.addColorStop(1, "#c9b8ad");
+    ctx.fillStyle = scleraGradient;
     ctx.fillRect(0, 0, w, h);
 
     // Crude little blood vessels: enough organic wrongness without becoming gore.
@@ -327,7 +354,15 @@ export class CoreEye {
 
     const irisX = cx + this.lookX * 42;
     const irisY = cy + this.lookY * 28;
-    const irisRadius = 15 * this.current.irisScale;
+    const irisRadius =
+      15 *
+      this.current.irisScale *
+      (1 + this.voiceEnergy * 0.035);
+
+    ctx.fillStyle = "rgba(17, 8, 38, 0.78)";
+    ctx.beginPath();
+    ctx.arc(irisX, irisY, irisRadius + 1.8, 0, Math.PI * 2);
+    ctx.fill();
 
     const irisGradient = ctx.createRadialGradient(
       irisX - 3,
@@ -348,10 +383,12 @@ export class CoreEye {
     ctx.arc(irisX, irisY, irisRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(255,255,255,0.28)";
+    ctx.strokeStyle = "rgba(255,255,255,0.34)";
     ctx.lineWidth = 1;
-    for (let i = 0; i < 18; i += 1) {
-      const angle = (i / 18) * Math.PI * 2 + Math.sin(elapsed * 0.2) * 0.04;
+    for (let i = 0; i < 28; i += 1) {
+      const angle =
+        (i / 28) * Math.PI * 2 +
+        Math.sin(elapsed * 0.2 + i * 0.17) * 0.045;
       ctx.beginPath();
       ctx.moveTo(
         irisX + Math.cos(angle) * 5,
@@ -375,11 +412,40 @@ export class CoreEye {
     );
     ctx.fill();
 
+    const cornea = ctx.createRadialGradient(
+      irisX - 5,
+      irisY - 7,
+      1,
+      irisX - 3,
+      irisY - 5,
+      10
+    );
+    cornea.addColorStop(0, "rgba(255,255,255,0.98)");
+    cornea.addColorStop(0.24, "rgba(255,255,255,0.58)");
+    cornea.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = cornea;
+    ctx.beginPath();
+    ctx.arc(irisX - 3, irisY - 5, 10, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(Math.round(irisX - 5), Math.round(irisY - 6), 4, 4);
+    ctx.fillRect(Math.round(irisX - 5), Math.round(irisY - 6), 3, 3);
     ctx.fillRect(Math.round(irisX + 4), Math.round(irisY + 2), 2, 2);
 
     ctx.restore();
+
+    // Wet lower-lid line gives the center eye a more physical, glassy read.
+    ctx.strokeStyle = "rgba(255, 224, 218, 0.72)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - halfWidth + 5, cy + halfHeight * 0.42);
+    ctx.quadraticCurveTo(
+      cx,
+      cy + halfHeight + 2,
+      cx + halfWidth - 5,
+      cy + halfHeight * 0.42
+    );
+    ctx.stroke();
 
     // Heavy cutout-like outline.
     ctx.strokeStyle = "#160b02";
