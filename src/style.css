@@ -1134,7 +1134,9 @@ html[style*="--breach: 1"] .hud__label {
 }
 
 #export-aspect,
-#export-resolution {
+#export-resolution,
+#export-look,
+#export-internal-scale {
   width: 100%;
   min-width: 0;
   appearance: none;
@@ -1234,6 +1236,8 @@ html[style*="--breach: 1"] .hud__label {
 
   #export-aspect,
   #export-resolution,
+  #export-look,
+  #export-internal-scale,
   #export-skit,
   #export-download {
     font-size: 7px;
