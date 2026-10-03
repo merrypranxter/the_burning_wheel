@@ -249,9 +249,12 @@ The wing system lives in `src/character/WingManifestation.js`. White/pearl/warm-
 The wings remain materially readable rather than ghost-only: most feather planes are near-opaque and depth-tested behind the body.
 
 ### Job 16 — Continuous rant speech pass
-Fix the long dead air between generated paragraphs. Brain/rant output should be normalized into **one continuous spoken rant** before TTS: preserve paragraph boundaries as simple line breaks for readability in the editor, but do not split them into separate voice requests with long waits between each paragraph. The goal is one continuous delivery with natural sentence/paragraph cadence instead of multiple disconnected utterances.
 
-Implementation note: the current skit runner treats each `SAY` as a separate ElevenLabs request and waits for it to finish. Job 16 should add a continuous-rant path that collapses adjacent prose chunks into one speech payload where practical, while preserving performance cues around the monologue. If TTS length limits require chunking, transitions should be seamless and should not add deliberate paragraph pauses.
+Implemented. AutoDirector now turns generated dialogue into a single readable `RANT ... ENDRANT` block instead of a stack of paragraph-level `SAY` commands and explicit beats. Paragraphs remain as simple editor line breaks, but the voice layer flattens them into one continuous utterance.
+
+Long rants are split only under the hood to stay below the existing 1200-character voice endpoint limit. All hidden TTS chunks are generated **before playback begins**, then played back-to-back through the same analyzed audio element. That moves generation latency to the start of the rant instead of inserting long dead-air gaps between paragraphs. Normal speech animation, eye activity, wing response, and analyzer-driven gestures continue throughout playback.
+
+Manual `SAY` commands still work. `RANT ... ENDRANT` is now the preferred generated-monologue format.
 
 ### Job 17 — Video export
 Add in-browser export of a performed skit to a finished video file.
