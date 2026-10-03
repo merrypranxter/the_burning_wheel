@@ -6,6 +6,14 @@ declare const Netlify: {
 
 const MAX_PROMPT = 2400;
 
+// Cost guard: this endpoint is intentionally not allowed to drift upward into
+// Pro-tier models. Add another model here only after explicitly deciding its cost.
+const CHEAP_MODELS = new Set([
+  "gemini-3.1-flash-lite",
+]);
+
+const DEFAULT_MODEL = "gemini-3.1-flash-lite";
+
 const PRESET_NOTES: Record<string, string> = {
   default:
     "Balanced Burning Wheel: mystical, profane, precise, funny, apophatic, mathematically literate.",
@@ -105,7 +113,10 @@ export default async function brain(request: Request) {
   }
 
   const apiKey = Netlify.env.get("GEMINI_API_KEY");
-  const model = Netlify.env.get("GEMINI_MODEL") || "gemini-3.6-flash";
+  const requestedModel = Netlify.env.get("GEMINI_MODEL") || DEFAULT_MODEL;
+  const model = CHEAP_MODELS.has(requestedModel)
+    ? requestedModel
+    : DEFAULT_MODEL;
 
   if (!apiKey) {
     return jsonError(
@@ -144,8 +155,11 @@ export default async function brain(request: Request) {
         ],
         generationConfig: {
           temperature: preset === "serious" ? 0.75 : 1.05,
-          maxOutputTokens: 1800,
+          maxOutputTokens: 1100,
           responseMimeType: "application/json",
+          thinkingConfig: {
+            thinkingLevel: "minimal",
+          },
         },
       }),
     });
@@ -195,6 +209,7 @@ export default async function brain(request: Request) {
       dialogue: dialogue.slice(0, 7000),
       model,
       preset,
+      costGuard: "flash-lite-only",
     },
     {
       headers: {
