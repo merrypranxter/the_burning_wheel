@@ -70,11 +70,74 @@ export default async function speak(request: Request) {
     return jsonError("Could not reach the voice service.", 502);
   }
 
-  if (!upstream.ok || !upstream.body) {
-    return jsonError(
-      `Voice generation failed upstream (HTTP ${upstream.status}).`,
-      502
+  if (!upstream.ok) {
+    // Do not erase ElevenLabs' reason for rejecting the request. In particular,
+    // a renewed balance cannot fix an expired API key, an inaccessible voice,
+    // or a model/voice mismatch. Return only the safe error detail, never the key.
+    let detail: any = null;
+
+    try {
+      detail = await upstream.json();
+    } catch {
+      detail = null;
+    }
+
+    const problem = detail?.detail ?? detail?.error ?? detail;
+    const upstreamCode =
+      typeof problem?.code === "string"
+        ? problem.code
+        : typeof problem?.status === "string"
+          ? problem.status
+          : "";
+
+    const upstreamMessage =
+      typeof problem?.message === "string"
+        ? problem.message
+        : typeof problem === "string"
+          ? problem
+          : "";
+
+    const guidance: Record<number, string> = {
+      400: "The voice request was rejected. Check the voice ID, model and audio format.",
+      401: "ElevenLabs rejected the API key. Check the production ELEVENLABS_API_KEY.",
+      402: "ElevenLabs reports insufficient available credits or a payment problem.",
+      403: "This API key does not have permission to use the requested voice or model.",
+      404: "The configured ElevenLabs voice could not be found or accessed.",
+      422: "ElevenLabs rejected the voice, model or request parameters.",
+      429: "ElevenLabs is rate-limiting voice requests. Try again later.",
+    };
+
+    const scrub = (value: string) =>
+      value
+        .replace(/(?:sk[-_]|xi[-_]api[-_]key)[A-Za-z0-9_-]{8,}/gi, "[redacted]")
+        .slice(0, 300);
+
+    const message = scrub(
+      upstreamMessage || guidance[upstream.status] ||
+        "The voice provider rejected the request."
     );
+
+    console.error("ElevenLabs speech rejected", {
+      status: upstream.status,
+      code: upstreamCode,
+      message,
+    });
+
+    return Response.json(
+      {
+        error: `ElevenLabs HTTP ${upstream.status}${upstreamCode ? ` (${scrub(upstreamCode)})` : ""}: ${message}`,
+        upstreamStatus: upstream.status,
+        upstreamCode: scrub(upstreamCode),
+      },
+      {
+        status: upstream.status === 429 ? 429 : 502,
+        headers: { "Cache-Control": "no-store" },
+      }
+    );
+  }
+
+  if (!upstream.body) {
+    return jsonError("ElevenLabs returned no audio.", 502);
   }
 
   return new Response(upstream.body, {
